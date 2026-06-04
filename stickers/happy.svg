@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220">
+  <!-- Shadow -->
+  <ellipse cx="110" cy="205" rx="60" ry="10" fill="#0002"/>
+  <!-- Body/Head -->
+  <ellipse cx="110" cy="118" rx="78" ry="72" fill="#FFD166"/>
+  <ellipse cx="110" cy="118" rx="78" ry="72" fill="none" stroke="#E8A000" stroke-width="3"/>
+  <!-- Ears -->
+  <polygon points="45,62 28,18 72,50" fill="#FFD166" stroke="#E8A000" stroke-width="2.5"/>
+  <polygon points="175,62 192,18 148,50" fill="#FFD166" stroke="#E8A000" stroke-width="2.5"/>
+  <!-- Inner ears -->
+  <polygon points="48,57 36,28 65,48" fill="#FFAAB5"/>
+  <polygon points="172,57 184,28 155,48" fill="#FFAAB5"/>
+  <!-- Face base -->
+  <ellipse cx="110" cy="115" rx="60" ry="55" fill="#FFF0C8"/>
+  <!-- Eyes — happy closed arcs -->
+  <path d="M82,105 Q95,90 108,105" fill="none" stroke="#3D2B1F" stroke-width="4.5" stroke-linecap="round"/>
+  <path d="M112,105 Q125,90 138,105" fill="none" stroke="#3D2B1F" stroke-width="4.5" stroke-linecap="round"/>
+  <!-- Nose -->
+  <ellipse cx="110" cy="122" rx="6" ry="5" fill="#FF8FAB"/>
+  <!-- Smile -->
+  <path d="M94,134 Q110,150 126,134" fill="none" stroke="#3D2B1F" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Teeth -->
+  <rect x="102" y="134" width="10" height="8" rx="2" fill="white" stroke="#3D2B1F" stroke-width="1.5"/>
+  <!-- Blush -->
+  <ellipse cx="78" cy="135" rx="14" ry="9" fill="#FF8FAB" opacity="0.45"/>
+  <ellipse cx="142" cy="135" rx="14" ry="9" fill="#FF8FAB" opacity="0.45"/>
+  <!-- Whiskers left -->
+  <line x1="16" y1="118" x2="86" y2="122" stroke="#B8860B" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="16" y1="130" x2="86" y2="128" stroke="#B8860B" stroke-width="1.8" stroke-linecap="round"/>
+  <!-- Whiskers right -->
+  <line x1="204" y1="118" x2="134" y2="122" stroke="#B8860B" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="204" y1="130" x2="134" y2="128" stroke="#B8860B" stroke-width="1.8" stroke-linecap="round"/>
+  <!-- Sparkles -->
+  <text x="18" y="75" font-size="18" fill="#FFD700">✦</text>
+  <text x="182" y="75" font-size="14" fill="#FFD700">✦</text>
+</svg>

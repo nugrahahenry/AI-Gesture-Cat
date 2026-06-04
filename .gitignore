@@ -1,0 +1,7 @@
+venv/
+__pycache__/
+*.pyc
+*.pkl
+data.csv
+hand_landmarker.task
+.DS_Store

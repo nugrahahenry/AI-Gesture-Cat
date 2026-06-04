@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220">
+  <ellipse cx="110" cy="205" rx="60" ry="10" fill="#0002"/>
+  <!-- Head -->
+  <ellipse cx="110" cy="118" rx="78" ry="72" fill="#B5EAD7"/>
+  <ellipse cx="110" cy="118" rx="78" ry="72" fill="none" stroke="#5CBA9B" stroke-width="3"/>
+  <!-- Ears — pointing up high -->
+  <polygon points="40,60 18,10 66,44" fill="#B5EAD7" stroke="#5CBA9B" stroke-width="2.5"/>
+  <polygon points="180,60 202,10 154,44" fill="#B5EAD7" stroke="#5CBA9B" stroke-width="2.5"/>
+  <polygon points="43,55 26,18 60,42" fill="#C8F7E5"/>
+  <polygon points="177,55 194,18 160,42" fill="#C8F7E5"/>
+  <!-- Face -->
+  <ellipse cx="110" cy="115" rx="60" ry="55" fill="#E8FFF5"/>
+  <!-- Surprised brows — raised high -->
+  <path d="M78,86 Q90,78 102,86" fill="none" stroke="#3D2B1F" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M118,86 Q130,78 142,86" fill="none" stroke="#3D2B1F" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Eyes — wide circles -->
+  <circle cx="90" cy="107" r="14" fill="white" stroke="#3D2B1F" stroke-width="2.5"/>
+  <circle cx="130" cy="107" r="14" fill="white" stroke="#3D2B1F" stroke-width="2.5"/>
+  <circle cx="90" cy="107" r="8" fill="#3D2B1F"/>
+  <circle cx="130" cy="107" r="8" fill="#3D2B1F"/>
+  <circle cx="87" cy="104" r="3" fill="white"/>
+  <circle cx="127" cy="104" r="3" fill="white"/>
+  <!-- Nose -->
+  <ellipse cx="110" cy="126" rx="6" ry="5" fill="#5CBA9B"/>
+  <!-- Open O mouth -->
+  <ellipse cx="110" cy="142" rx="11" ry="13" fill="#3D2B1F"/>
+  <ellipse cx="110" cy="142" rx="8" ry="10" fill="#FF6B6B"/>
+  <!-- Whiskers -->
+  <line x1="16" y1="120" x2="82" y2="124" stroke="#5CBA9B" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="16" y1="132" x2="82" y2="130" stroke="#5CBA9B" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="204" y1="120" x2="138" y2="124" stroke="#5CBA9B" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="204" y1="132" x2="138" y2="130" stroke="#5CBA9B" stroke-width="1.8" stroke-linecap="round"/>
+  <!-- Sweat drop -->
+  <ellipse cx="162" cy="88" rx="5" ry="7" fill="#88DDFF" opacity="0.9"/>
+  <path d="M162,95 Q158,102 162,106" fill="#88DDFF" opacity="0.9"/>
+  <!-- Surprise lines -->
+  <line x1="10" y1="90" x2="28" y2="95" stroke="#5CBA9B" stroke-width="2" stroke-linecap="round"/>
+  <line x1="12" y1="104" x2="30" y2="104" stroke="#5CBA9B" stroke-width="2" stroke-linecap="round"/>
+  <line x1="210" y1="90" x2="192" y2="95" stroke="#5CBA9B" stroke-width="2" stroke-linecap="round"/>
+  <line x1="208" y1="104" x2="190" y2="104" stroke="#5CBA9B" stroke-width="2" stroke-linecap="round"/>
+</svg>

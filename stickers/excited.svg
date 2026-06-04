@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220">
+  <ellipse cx="110" cy="205" rx="60" ry="10" fill="#0002"/>
+  <!-- Head -->
+  <ellipse cx="110" cy="118" rx="78" ry="72" fill="#FFB347"/>
+  <ellipse cx="110" cy="118" rx="78" ry="72" fill="none" stroke="#E07800" stroke-width="3"/>
+  <!-- Ears -->
+  <polygon points="42,62 22,16 68,48" fill="#FFB347" stroke="#E07800" stroke-width="2.5"/>
+  <polygon points="178,62 198,16 152,48" fill="#FFB347" stroke="#E07800" stroke-width="2.5"/>
+  <polygon points="45,57 30,24 63,46" fill="#FFD4A0"/>
+  <polygon points="175,57 190,24 157,46" fill="#FFD4A0"/>
+  <!-- Face -->
+  <ellipse cx="110" cy="115" rx="60" ry="55" fill="#FFF5E0"/>
+  <!-- Heart eyes -->
+  <!-- Left heart -->
+  <path d="M82,96 C82,91 88,88 90,93 C92,88 98,91 98,96 Q98,102 90,108 Q82,102 82,96Z" fill="#FF4D6D"/>
+  <!-- Right heart -->
+  <path d="M122,96 C122,91 128,88 130,93 C132,88 138,91 138,96 Q138,102 130,108 Q122,102 122,96Z" fill="#FF4D6D"/>
+  <!-- Nose -->
+  <ellipse cx="110" cy="122" rx="6" ry="5" fill="#E07800"/>
+  <!-- Big excited smile -->
+  <path d="M88,134 Q110,155 132,134" fill="none" stroke="#3D2B1F" stroke-width="4" stroke-linecap="round"/>
+  <!-- Teeth -->
+  <path d="M96,134 Q110,150 124,134 L120,134 Q110,146 100,134Z" fill="white" stroke="#3D2B1F" stroke-width="1.5"/>
+  <!-- Big blush -->
+  <ellipse cx="74" cy="132" rx="16" ry="10" fill="#FF8FAB" opacity="0.5"/>
+  <ellipse cx="146" cy="132" rx="16" ry="10" fill="#FF8FAB" opacity="0.5"/>
+  <!-- Whiskers -->
+  <line x1="16" y1="118" x2="86" y2="122" stroke="#E07800" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="16" y1="130" x2="86" y2="128" stroke="#E07800" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="204" y1="118" x2="134" y2="122" stroke="#E07800" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="204" y1="130" x2="134" y2="128" stroke="#E07800" stroke-width="1.8" stroke-linecap="round"/>
+  <!-- Stars/sparkles around head -->
+  <text x="12" y="68" font-size="20" fill="#FFD700">★</text>
+  <text x="186" y="68" font-size="16" fill="#FFD700">★</text>
+  <text x="100" y="30" font-size="14" fill="#FF4D6D">♥</text>
+  <text x="170" y="100" font-size="12" fill="#FFD700">✦</text>
+  <text x="30" y="100" font-size="12" fill="#FFD700">✦</text>
+</svg>
