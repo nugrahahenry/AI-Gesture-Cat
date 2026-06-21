@@ -38,11 +38,10 @@
       { trigger:5,      text:'Sampai jumpa! ✌️',            speech:'Sampai jumpa!',                sticker:'stickers/exited.jpg'    },
     ];
 
-    // ElevenLabs (opsional) — isi API key untuk suara yang lebih natural
-    // Daftar gratis di elevenlabs.io → Profile → API Key
-    // Kosongkan string untuk pakai Web Speech API bawaan browser
-    const ELEVENLABS_KEY   = 'sk_9164161febbef2d4a9950f01f24e6857b25c866ae3fc2b48';
-    const ELEVENLABS_VOICE = '21m00Tcm4TlvDq8ikWAM'; // Rachel — multilingual
+    // TTS: suara intro pakai Gemini TTS lewat serverless proxy /api/tts
+    // (key Gemini disimpan di environment Vercel, TIDAK di sini — aman dari publik).
+    // Kalau /api/tts tidak ada (mis. buka file langsung) → otomatis fallback Web Speech API.
+    // Ganti voice default? Set GEMINI_TTS_VOICE di Vercel (lihat api/tts.js).
 
     // kNN: jumlah tetangga terdekat (lebih kecil = lebih presisi)
     const KNN_K = 7;
@@ -759,52 +758,104 @@
   // Analogi baru (distance-weighted): tetangga lebih dekat = suara lebih berat
   // Seperti tanya pendapat: orang yang lebih ahli (lebih mirip) dipercaya lebih
 
-  function euclidean(a, b) {
-    let s = 0;
-    for (let i = 1; i < a.length; i++) s += (a[i]-b[i])**2;
-    return Math.sqrt(s);
+  /* ── Index latih: konversi SEKALI ke typed array ──────────
+   * Analogi: dulu tiap frame kita "fotokopi" 2460 baris jadi objek {label,d}
+   * baru dihitung — boros & bikin sampah (GC) tiap frame. Sekarang kita susun
+   * sekali jadi rak rapi (Float32Array): satu blok angka rapat, CPU baca cepet,
+   * nol alokasi per frame. */
+  let FEAT = null, LAB = null, LABELS_ARR = null, NROWS = 0;
+  const DIM = 63;
+  function buildIndex() {
+    if (typeof MODEL_DATA === 'undefined') return;
+    NROWS = MODEL_DATA.length;
+    LABELS_ARR = (typeof MODEL_LABELS !== 'undefined' && MODEL_LABELS)
+      ? MODEL_LABELS.slice()
+      : [...new Set(MODEL_DATA.map(r => r[0]))].sort();
+    const labIndex = Object.create(null);
+    LABELS_ARR.forEach((l, i) => labIndex[l] = i);
+    FEAT = new Float32Array(NROWS * DIM);
+    LAB  = new Int16Array(NROWS);
+    for (let r = 0; r < NROWS; r++) {
+      const row = MODEL_DATA[r];
+      LAB[r] = labIndex[row[0]];
+      const base = r * DIM;
+      for (let j = 0; j < DIM; j++) FEAT[base + j] = row[j + 1];
+    }
   }
+  buildIndex();
+
+  // Diagnostik (buka Console / F12): true = log latency kNN + jarak tetangga terdekat.
+  const KNN_DEBUG = false;
+  // Tolak pose "asing" yang jauh dari semua data latih → ngurangin salah-tebak.
+  // 0 = mati (default, aman). Cara setel: nyalain KNN_DEBUG, perhatiin "nn=" pas
+  // pose normal (kecil) vs pose ngaco (besar), lalu pilih angka di antaranya (mis. 0.35).
+  const MAX_NN_DIST = 0;
 
   // Rolling window untuk smoothing prediksi antar-frame
   const _predBuffer = [];
 
   function knnPredict(flat63) {
-    if (typeof MODEL_DATA === 'undefined') return null;
-    const q = [null, ...flat63];
+    if (!FEAT) return null;
+    const K = KNN_K;
 
-    // Hitung jarak ke semua training samples
-    const dists = MODEL_DATA.map(row => ({ label:row[0], d:euclidean(q, row) }));
-    dists.sort((a,b) => a.d - b.d);
-    const topK = dists.slice(0, KNN_K);
+    // ── Cari K tetangga terdekat pakai JARAK KUADRAT (tanpa sqrt) ──
+    // Urutan jarak² == urutan jarak, jadi tetangganya IDENTIK dengan euclidean —
+    // tapi kita hemat ~2460 operasi akar tiap frame. Plus "partial-distance":
+    // begitu jumlah sementara udah lebih besar dari tetangga ke-K terburuk,
+    // baris itu mustahil masuk → langsung stop. Top-K via sisip (tanpa sort 2460).
+    const kd = new Float64Array(K).fill(Infinity); // jarak² terbaik (urut naik)
+    const ki = new Int32Array(K).fill(-1);          // index baris-nya
+    let worst = Infinity;
+    for (let r = 0; r < NROWS; r++) {
+      const base = r * DIM;
+      let s = 0;
+      for (let j = 0; j < DIM; j++) {
+        const diff = flat63[j] - FEAT[base + j];
+        s += diff * diff;
+        if (s >= worst) { s = Infinity; break; } // mustahil top-K → buang
+      }
+      if (s < worst) {
+        let p = K - 1;
+        while (p > 0 && kd[p - 1] > s) { kd[p] = kd[p - 1]; ki[p] = ki[p - 1]; p--; }
+        kd[p] = s; ki[p] = r;
+        worst = kd[K - 1];
+      }
+    }
 
-    // ── Distance-weighted voting ──────────────────────────
-    // Setiap tetangga dapat bobot = 1/(jarak + epsilon)
-    // Tetangga yang lebih dekat → bobot lebih besar → lebih berpengaruh
+    // ── Distance-weighted voting (akar cuma buat K tetangga, bukan 2460) ──
+    // Tetangga lebih dekat → bobot 1/(jarak+eps) lebih besar → lebih berpengaruh.
     const EPS = 1e-6;
     const wts = {};
     let total = 0;
-    topK.forEach(({ label, d }) => {
+    const nn = Math.sqrt(kd[0]); // jarak ke tetangga TERDEKAT (buat gate outlier)
+    for (let n = 0; n < K; n++) {
+      if (ki[n] < 0) continue;
+      const d = Math.sqrt(kd[n]);
+      const label = LABELS_ARR[LAB[ki[n]]];
       const w = 1 / (d + EPS);
       wts[label] = (wts[label] || 0) + w;
       total += w;
-    });
-    // Normalisasi ke probabilitas (jumlah = 1.0)
-    const all = Object.fromEntries(Object.entries(wts).map(([l,w]) => [l, w/total]));
-    const rawWinner = Object.entries(all).sort((a,b) => b[1]-a[1])[0];
+    }
+    const all = Object.fromEntries(Object.entries(wts).map(([l, w]) => [l, w / total]));
+    const rawWinner = Object.entries(all).sort((a, b) => b[1] - a[1])[0];
 
-    // ── Smoothing: rolling window SMOOTH_FRAMES frame terakhir ──
+    // ── Smoothing: majority label dari SMOOTH_FRAMES frame terakhir ──
     // Analogi: jangan langsung percaya satu snapshot — lihat tren beberapa detik
     _predBuffer.push(rawWinner[0]);
     if (_predBuffer.length > SMOOTH_FRAMES) _predBuffer.shift();
 
     const freq = {};
-    _predBuffer.forEach(e => freq[e] = (freq[e]||0) + 1);
-    const smoothed = Object.entries(freq).sort((a,b) => b[1]-a[1])[0][0];
+    _predBuffer.forEach(e => freq[e] = (freq[e] || 0) + 1);
+    const smoothed = Object.entries(freq).sort((a, b) => b[1] - a[1])[0][0];
+
+    // Pose terlalu jauh dari data latih → anggap "tidak yakin" (confidence 0).
+    const outlier = MAX_NN_DIST > 0 && nn > MAX_NN_DIST;
 
     return {
       emotion:    smoothed,
-      confidence: all[smoothed] ?? rawWinner[1],
-      all
+      confidence: outlier ? 0 : (all[smoothed] ?? rawWinner[1]),
+      all,
+      nn
     };
   }
 
@@ -1021,7 +1072,7 @@
     return countFingers(lm) >= 4;
   }
 
-  /* ── ElevenLabs / Web Speech TTS ────────────────────── */
+  /* ── Gemini TTS (proxy /api/tts) → fallback Web Speech ── */
   let ttsAudio = null;
 
   async function speak(text) {
@@ -1029,28 +1080,29 @@
     if (ttsAudio) { ttsAudio.pause(); ttsAudio = null; }
     window.speechSynthesis?.cancel();
 
-    if (ELEVENLABS_KEY) {
-      try {
-        const r = await fetch(
-          `https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE}`, {
-          method: 'POST',
-          headers: { 'xi-api-key': ELEVENLABS_KEY, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            text,
-            model_id: 'eleven_multilingual_v2',
-            voice_settings: { stability: 0.5, similarity_boost: 0.75, style: 0.3, use_speaker_boost: true }
-          })
-        });
-        if (!r.ok) throw new Error(`ElevenLabs ${r.status}`);
-        const blob = await r.blob();
-        ttsAudio = new Audio(URL.createObjectURL(blob));
-        ttsAudio.play();
-        return;
-      } catch(e) {
-        console.warn('ElevenLabs fallback:', e.message);
-      }
+    // Coba Gemini TTS via serverless proxy. Pakai timeout supaya intro tidak
+    // ngegantung kalau jaringan lambat — keburu fallback ke suara browser.
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 6000);
+      const r = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+        signal: ctrl.signal,
+      });
+      clearTimeout(t);
+      const ct = r.headers.get('content-type') || '';
+      if (!r.ok || !ct.includes('audio')) throw new Error(`TTS ${r.status} (${ct})`);
+      const blob = await r.blob();
+      ttsAudio = new Audio(URL.createObjectURL(blob));
+      await ttsAudio.play();
+      return;
+    } catch (e) {
+      console.warn('Gemini TTS gagal, fallback ke Web Speech:', e.message);
     }
-    // Fallback: Web Speech API
+
+    // Fallback: Web Speech API (suara bawaan browser, gratis tanpa key)
     const u = new SpeechSynthesisUtterance(text);
     u.lang = 'id-ID'; u.rate = 0.92; u.pitch = 1.05;
     window.speechSynthesis.speak(u);
@@ -1346,8 +1398,10 @@
     if (Date.now() - lastT < 80) return;
     lastT = Date.now();
     const flat = normalize(lm);
+    const _t0 = KNN_DEBUG ? performance.now() : 0;
     const result = knnPredict(flat);
     if (!result) return;
+    if (KNN_DEBUG) console.log(`kNN ${(performance.now()-_t0).toFixed(2)}ms · nn=${result.nn.toFixed(3)} · ${result.emotion} ${(result.confidence*100)|0}%`);
     const { emotion, confidence, all } = result;
 
     // Skip kalau confidence terlalu rendah — lebih baik diam daripada salah tebak

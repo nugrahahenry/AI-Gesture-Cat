@@ -5,3 +5,8 @@ __pycache__/
 data.csv
 hand_landmarker.task
 .DS_Store
+
+# Secrets — JANGAN commit. Key asli taruh di .env (lokal) & Vercel env vars.
+.env
+.env*.local
+.vercel
