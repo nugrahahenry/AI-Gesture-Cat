@@ -64,7 +64,10 @@ async function geminiTTS(model, key, text, voice) {
     method: 'POST',
     headers: { 'x-goog-api-key': key, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      contents: [{ parts: [{ text }] }],
+      // Framing "Bacakan:" — cegah Gemini TTS kadang BALIK TEKS (error 400
+      // "tried to generate text") buat kalimat pendek. Directive ini ditafsir
+      // sebagai gaya, bukan ikut dibacakan.
+      contents: [{ parts: [{ text: `Bacakan dengan ramah dan jelas: ${text}` }] }],
       generationConfig: {
         responseModalities: ['AUDIO'],
         speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } },

@@ -10,3 +10,7 @@ hand_landmarker.task
 .env
 .env*.local
 .vercel
+
+# ─── Windows launcher scripts (lokal, jangan masuk GitHub) ───
+*.bat
+*.vbs
