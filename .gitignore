@@ -14,3 +14,9 @@ hand_landmarker.task
 # ─── Windows launcher scripts (lokal, jangan masuk GitHub) ───
 *.bat
 *.vbs
+
+# ─── Docs = konteks pribadi (DESIGN/CHANGELOG/brief) — jangan ke GitHub ───
+docs/
+
+# Backup aset asli sebelum di-resize (lokal aja)
+assets/**/_originals/
