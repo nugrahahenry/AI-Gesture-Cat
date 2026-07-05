@@ -16,6 +16,17 @@
                                // buat dia + lebih susah ditembus orang lain. Naikin ke 0.65-0.7
                                // kalau ada yang mirip ke-accept.
   const ENROLL_SAMPLES = 8;
+  // Enroll TERPANDU (ala Face-ID): user diarahkan nengok tiap arah → rekam embedding
+  // dari banyak sudut. Recognition nanti ambil similarity TERTINGGI dari semua sudut,
+  // jadi walau wajah miring/dongak/nunduk tetep kenal (bukan cuma pas depan-lurus).
+  const ENROLL_POSES = [
+    { key: 'center', dir: 'center', main: 'PAS-IN MUKA',   sub: 'Lihat lurus ke kamera' },
+    { key: 'right',  dir: 'right',  main: 'TENGOK KANAN',  sub: 'Putar kepala pelan ke kanan' },
+    { key: 'left',   dir: 'left',   main: 'TENGOK KIRI',   sub: 'Putar kepala pelan ke kiri' },
+    { key: 'up',     dir: 'up',     main: 'DONGAK DIKIT',  sub: 'Angkat dagu, lihat ke atas' },
+    { key: 'down',   dir: 'down',   main: 'TUNDUK DIKIT',  sub: 'Turunin dagu, lihat ke bawah' },
+  ];
+  const ENROLL_PER_POSE = 3;   // 5 sudut × 3 = ~15 sampel (jauh lebih tahan dari 8 frontal)
   const HUMAN_CDN = 'https://cdn.jsdelivr.net/npm/@vladmandic/human/dist/human.js';
 
   const config = {
@@ -80,11 +91,11 @@
     return { embedding: Array.from(emb), emotion: emo, score, box: f.box };
   }
 
-  // ── Owner DITANAM (baked) — biar Henry dikenali di SEMUA device tanpa ?setup ──
-  // Cara isi (SEKALI aja): buka console setelah enroll → jalankan:
-  //     copy(CatFace.exportOwner())
-  // lalu paste hasilnya ke sini (ganti null). Format: {name, embeddings:[[...],...]}.
-  const DEFAULT_OWNER = null;
+  // ── Owner DITANAM (baked) — dikenali di SEMUA device tanpa ?setup ──
+  // Diisi lewat file owner.js (di-load SEBELUM face.js di index.html):
+  //     window.CATMOJI_OWNER = <hasil copy(localStorage.getItem('catmoji_owner_face'))>;
+  // localStorage tetap menang kalau user enroll sendiri. Kalau owner.js kosong → null (form biasa).
+  const DEFAULT_OWNER = (typeof window !== 'undefined' && window.CATMOJI_OWNER && window.CATMOJI_OWNER.embeddings) ? window.CATMOJI_OWNER : null;
 
   function _valid(o) { return !!(o && o.embeddings && o.embeddings.length); }
   function getOwner() {
@@ -116,6 +127,37 @@
     if (samples.length < 3) { console.warn('[CatFace] enroll gagal — wajah kurang kebaca'); return false; }
     localStorage.setItem(OWNER_KEY, JSON.stringify({ name: name || 'Owner', embeddings: samples, ts: Date.now() }));
     console.log(`[CatFace] owner "${name || 'Owner'}" terdaftar ✓ (${samples.length} sampel)`);
+    return true;
+  }
+
+  // Enroll TERPANDU — UI ngedrive lewat callback (onStep/onCapture/onPoseDone).
+  // cb = { name, onStep(p,pose,totalPoses,totalSamples), onCapture(p,done,total),
+  //        onWait(p), onPoseDone(p,got) }.  Semua callback opsional.
+  async function enrollOwnerGuided(cb) {
+    cb = cb || {};
+    if (!(await ensureReady())) return false;
+    const samples = [];
+    const total = ENROLL_POSES.length * ENROLL_PER_POSE;
+    for (let p = 0; p < ENROLL_POSES.length; p++) {
+      const pose = ENROLL_POSES[p];
+      if (cb.onStep) cb.onStep(p, pose, ENROLL_POSES.length, total);
+      await new Promise(r => setTimeout(r, 750));       // kasih waktu user gerak ke arah pose (settle)
+      let got = 0, tries = 0;
+      const maxTries = ENROLL_PER_POSE * 12;            // kalau susah kebaca → nyerah, lanjut pose lain
+      while (got < ENROLL_PER_POSE && tries < maxTries) {
+        tries++;
+        const d = await detectOnce();
+        if (d && d.score > 0.5 && faceBigEnough(d.box)) {
+          samples.push(d.embedding); got++;
+          if (cb.onCapture) cb.onCapture(p, samples.length, total);
+        } else if (cb.onWait) { cb.onWait(p); }
+        await new Promise(r => setTimeout(r, 160));
+      }
+      if (cb.onPoseDone) cb.onPoseDone(p, got);
+    }
+    if (samples.length < 4) { console.warn('[CatFace] enroll terpandu gagal — wajah kurang kebaca'); return false; }
+    localStorage.setItem(OWNER_KEY, JSON.stringify({ name: cb.name || 'Owner', embeddings: samples, ts: Date.now() }));
+    console.log(`[CatFace] owner "${cb.name || 'Owner'}" terdaftar ✓ (${samples.length} sampel · ${ENROLL_POSES.length} sudut)`);
     return true;
   }
 
@@ -158,5 +200,5 @@
     return { isOwner: med >= SIM_THRESHOLD, similarity: med, name: owner.name };
   }
 
-  window.CatFace = { ensureReady, detectOnce, enrollOwner, recognize, isEnrolled, clearOwner, exportOwner, SIM_THRESHOLD };
+  window.CatFace = { ensureReady, detectOnce, enrollOwner, enrollOwnerGuided, ENROLL_POSES, recognize, isEnrolled, clearOwner, exportOwner, SIM_THRESHOLD };
 })();
