@@ -509,32 +509,39 @@
       font-size:.72rem;font-weight:700;color:var(--ink);background:var(--yellow);
       padding:5px 13px;border-radius:999px;border:2px solid var(--ink);white-space:nowrap;
     }
-    /* Animasi SCAN wajah — reticle (kurung sudut) + garis scan + label, di frame kanan */
+    /* ══ SCAN wajah — face-scanner neubrutalism: lock-on reticle + radar + ring + scanline ══ */
     #scan-fx{display:none}
-    #intro-overlay.scanning #scan-fx{
-      display:block;position:absolute;inset:13%;z-index:3;pointer-events:none;
-      animation:scanPulse 1.4s ease-in-out infinite;
-    }
-    /* 2 kurung sudut diagonal (kesan "scanner") */
-    #intro-overlay.scanning #scan-fx::before,#intro-overlay.scanning #scan-fx::after{
-      content:'';position:absolute;width:30px;height:30px;border:4px solid var(--teal);
-    }
-    #intro-overlay.scanning #scan-fx::before{top:0;left:0;border-right:0;border-bottom:0;border-radius:12px 0 0 0}
-    #intro-overlay.scanning #scan-fx::after{bottom:0;right:0;border-left:0;border-top:0;border-radius:0 0 12px 0}
-    #intro-overlay.scanning #intro-cam-frame::after{
-      content:'';position:absolute;left:0;right:0;height:5px;z-index:4;background:var(--tangerine);
-      box-shadow:0 0 16px 3px var(--tangerine);top:0;animation:scanLine 1.3s cubic-bezier(.4,0,.6,1) infinite;
-    }
+    #intro-overlay.scanning #scan-fx{display:block;position:absolute;inset:12%;z-index:3;pointer-events:none}
+    /* 4 kurung sudut "lock-on" (snap-pulse) */
+    .sf-c{position:absolute;width:30px;height:30px;border:4px solid var(--teal);animation:sfSnap 1.3s ease-in-out infinite}
+    .sf-tl{top:0;left:0;border-right:0;border-bottom:0;border-radius:12px 0 0 0}
+    .sf-tr{top:0;right:0;border-left:0;border-bottom:0;border-radius:0 12px 0 0}
+    .sf-bl{bottom:0;left:0;border-right:0;border-top:0;border-radius:0 0 0 12px}
+    .sf-br{bottom:0;right:0;border-left:0;border-top:0;border-radius:0 0 12px 0}
+    @keyframes sfSnap{0%,100%{opacity:.5;transform:scale(.88)}50%{opacity:1;transform:scale(1)}}
+    /* Radar sweep — garis muter dari tengah */
+    .sf-radar{position:absolute;top:50%;left:50%;width:78%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;overflow:hidden}
+    .sf-radar::before{content:'';position:absolute;top:50%;left:50%;width:50%;height:3px;transform-origin:0 50%;background:linear-gradient(90deg,transparent,var(--teal));animation:sfRadar 1.7s linear infinite}
+    @keyframes sfRadar{to{transform:rotate(360deg)}}
+    /* 2 ring nge-pulse dari tengah (staggered) */
+    .sf-ring{position:absolute;top:50%;left:50%;width:40%;aspect-ratio:1;border:3px solid var(--tangerine);border-radius:50%;transform:translate(-50%,-50%) scale(.2);animation:sfRing 1.8s ease-out infinite}
+    .sf-ring:last-child{animation-delay:.9s}
+    @keyframes sfRing{0%{transform:translate(-50%,-50%) scale(.2);opacity:.9}100%{transform:translate(-50%,-50%) scale(1.5);opacity:0}}
+    /* Garis scan horizontal turun */
+    #intro-overlay.scanning #intro-cam-frame::after{content:'';position:absolute;left:0;right:0;height:5px;z-index:4;background:var(--tangerine);box-shadow:0 0 16px 3px var(--tangerine);top:0;animation:scanLine 1.3s cubic-bezier(.4,0,.6,1) infinite}
     @keyframes scanLine{0%{top:8%;opacity:0}14%{opacity:1}86%{opacity:1}100%{top:92%;opacity:0}}
-    @keyframes scanPulse{0%,100%{opacity:.45;transform:scale(.95)}50%{opacity:1;transform:scale(1.04)}}
-    /* Label "MENGENALI WAJAH" — cuma pas scanning */
+    /* Label pill — tampil pas scanning ATAU rejected */
     #intro-scan-label{display:none}
-    #intro-overlay.scanning #intro-scan-label{
+    #intro-overlay.scanning #intro-scan-label,#intro-overlay.rejected #intro-scan-label{
       display:block;position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:5;
       font-family:'Bricolage Grotesque',sans-serif;font-size:.66rem;font-weight:800;letter-spacing:1.5px;
       color:var(--ink);background:var(--teal);padding:4px 12px;border-radius:999px;border:2px solid var(--ink);
       animation:blink 1.4s ease-in-out infinite;
     }
+    /* ── NOT RECOGNIZED (guest): frame goyang + pill coral ── */
+    #intro-overlay.rejected #intro-cam-frame{animation:sfShake .55s ease}
+    #intro-overlay.rejected #intro-scan-label{background:var(--coral);color:var(--paper);animation:none}
+    @keyframes sfShake{0%,100%{transform:translateX(0)}15%{transform:translateX(-8px)}30%{transform:translateX(8px)}45%{transform:translateX(-5px)}60%{transform:translateX(5px)}75%{transform:translateX(-2px)}}
     /* Feedback JARI pas presentasi — biar user tau tangannya kedeteksi */
     #intro-hold{
       position:absolute;left:12px;right:12px;bottom:44px;z-index:6;display:none;flex-direction:column;gap:6px;
@@ -676,7 +683,10 @@
       <div class="intro-right">
         <div id="intro-cam-frame">
           <video id="intro-cam-feed" autoplay playsinline muted></video>
-          <div id="scan-fx" aria-hidden="true"></div>
+          <div id="scan-fx" aria-hidden="true">
+            <span class="sf-c sf-tl"></span><span class="sf-c sf-tr"></span><span class="sf-c sf-bl"></span><span class="sf-c sf-br"></span>
+            <span class="sf-radar"></span><span class="sf-ring"></span><span class="sf-ring"></span>
+          </div>
           <div id="intro-scan-label" aria-hidden="true">MENGENALI WAJAH</div>
           <div id="intro-hold" aria-hidden="true"><span id="intro-hold-label"></span><div id="intro-hold-track"><div id="intro-hold-bar"></div></div></div>
           <div id="intro-cam-cap">✨ Senyum, kamu di kamera</div>
@@ -1031,7 +1041,7 @@
       // Keluar dari challenge kalau sedang aktif
       exitChallenge();
       // Tutup intro overlay kalau sedang terbuka
-      introOverlay.classList.remove('show','presenting','scanning');
+      introOverlay.classList.remove('show','presenting','scanning','rejected');
       window.speechSynthesis?.cancel();
       introSlideIdx = -1;
 
@@ -1385,7 +1395,7 @@
   function openIntroMode() {
     introSlideIdx = -1;
     welcomeScanned = false;   // scan ulang tiap buka intro
-    introOverlay.classList.remove('presenting');
+    introOverlay.classList.remove('presenting','rejected');
     const _done = document.getElementById('intro-done'); if (_done) _done.style.display = 'none';
     // Sambungkan camera stream ke intro overlay supaya muka tetap kelihatan
     const introCam = document.getElementById('intro-cam-feed');
@@ -1569,9 +1579,10 @@
   // State DIVISUALISASIKAN pakai aset Moji transparan (bukan ikon SVG/emoji) — sesuai DESIGN.md.
   // Ilustrasi tampil di slot maskot intro (introStickerEl). state: ''|'info'|'loading'|'ok'|'err'
   const FACE_ART = {
-    loading: 'assets/ui/state/moji-loading.png',
-    ok:      'assets/ui/state/moji-success.png',
-    err:     'assets/ui/state/moji-error.png',
+    loading:  'assets/ui/state/moji-loading.png',
+    ok:       'assets/ui/state/moji-success.png',
+    err:      'assets/ui/state/moji-error.png',
+    notfound: 'assets/ui/state/moji-error.png',   // guest (wajah kebaca tapi bukan owner)
   };
   function setFaceStatus(t, state = '') {
     const box = document.getElementById('intro-face-status');
@@ -1615,6 +1626,7 @@
     if (face) face.style.display = 'flex';
     if (form) form.style.display = 'none';     // sembunyiin form selama scan
     if (startBtn) startBtn.style.display = 'none';
+    const _sl = document.getElementById('intro-scan-label'); if (_sl) _sl.textContent = 'MENGENALI WAJAH';
     setFaceStatus('Mengenali wajah', 'loading');   // titik "..." dianimasiin CSS
     introOverlay.classList.add('scanning');
     try {
@@ -1630,12 +1642,22 @@
         // Sengaja NGGAK speak di sini → biar suara nggak DOUBLE. Slide 0 ("Hai [nama]!") yang ngomong.
         // Auto-mulai intro setelah momen sukses (kalau masih di welcome & belum ditutup)
         setTimeout(() => { if (currentMode === 'intro' && introSlideIdx === -1) startIntroPresentation(); }, 1600);
-      } else {                                 // bukan owner → lanjut isi form (transisi halus)
-        setFaceStatus(r.reason === 'wajah tak terdeteksi' ? 'Hadap kamera ya' : 'Wajah belum dikenal — isi datamu', 'info');
+      } else if (r.reason) {                   // nggak ada perbandingan (wajah nggak kebaca / human gagal) → langsung form
+        setFaceStatus('Isi datamu dulu ya 👋', 'info');
         clearForm(); showGuest();
         const _f = document.getElementById('intro-form');
-        if (_f) { _f.classList.remove('intro-reveal'); void _f.offsetWidth; _f.classList.add('intro-reveal'); }   // smooth reveal
-        if (r.reason !== 'wajah tak terdeteksi') speak('Halo! Isi datamu dulu ya.', selectedVoice);
+        if (_f) { _f.classList.remove('intro-reveal'); void _f.offsetWidth; _f.classList.add('intro-reveal'); }
+      } else {                                 // ADA wajah tapi BUKAN owner (guest) → beat "belum kenal"
+        const _sl2 = document.getElementById('intro-scan-label'); if (_sl2) _sl2.textContent = 'BELUM KENAL 👀';
+        introOverlay.classList.add('rejected');                              // frame goyang + pill coral
+        setFaceStatus('Hmm, aku belum kenal kamu — isi datamu ya 👋', 'notfound');  // maskot = moji-error
+        speak('Halo! Isi datamu dulu ya.', selectedVoice);
+        setTimeout(() => {                                                   // beat ~1.4s → form (reveal)
+          introOverlay.classList.remove('rejected');
+          clearForm(); showGuest();
+          const _f = document.getElementById('intro-form');
+          if (_f) { _f.classList.remove('intro-reveal'); void _f.offsetWidth; _f.classList.add('intro-reveal'); }
+        }, 1400);
       }
     } catch (e) { introOverlay.classList.remove('scanning'); clearForm(); showGuest(); console.warn(e); }
     finally { welcomeBusy = false; welcomeScanned = true; }
@@ -1673,7 +1695,7 @@
   document.getElementById('intro-again')?.addEventListener('click', () => {
     const done = document.getElementById('intro-done'); if (done) done.style.display = 'none';
     welcomeScanned = false;                               // izinin scan lagi
-    introOverlay.classList.remove('presenting');
+    introOverlay.classList.remove('presenting','rejected');
     window.speechSynthesis?.cancel(); if (ttsAudio) { try { ttsAudio.pause(); } catch(_){} ttsAudio = null; }
     introSlideIdx = -1; renderIntroSlide(-1);             // MULAI LAGI DARI SCAN MUKA (bukan langsung intro)
   });

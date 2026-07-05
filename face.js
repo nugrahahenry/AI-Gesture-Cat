@@ -80,9 +80,20 @@
     return { embedding: Array.from(emb), emotion: emo, score, box: f.box };
   }
 
-  function getOwner()   { try { return JSON.parse(localStorage.getItem(OWNER_KEY) || 'null'); } catch (e) { return null; } }
-  function isEnrolled() { const o = getOwner(); return !!(o && o.embeddings && o.embeddings.length); }
+  // ── Owner DITANAM (baked) — biar Henry dikenali di SEMUA device tanpa ?setup ──
+  // Cara isi (SEKALI aja): buka console setelah enroll → jalankan:
+  //     copy(CatFace.exportOwner())
+  // lalu paste hasilnya ke sini (ganti null). Format: {name, embeddings:[[...],...]}.
+  const DEFAULT_OWNER = null;
+
+  function _valid(o) { return !!(o && o.embeddings && o.embeddings.length); }
+  function getOwner() {
+    try { const o = JSON.parse(localStorage.getItem(OWNER_KEY) || 'null'); if (_valid(o)) return o; } catch (e) {}
+    return _valid(DEFAULT_OWNER) ? DEFAULT_OWNER : null;   // fallback ke owner yang ditanam
+  }
+  function isEnrolled() { return !!getOwner(); }
   function clearOwner() { localStorage.removeItem(OWNER_KEY); }
+  function exportOwner() { return JSON.stringify(getOwner()); }   // buat Henry copy → tanam ke DEFAULT_OWNER
 
   function simil(a, b) {
     if (human && typeof human.similarity === 'function') {
@@ -147,5 +158,5 @@
     return { isOwner: med >= SIM_THRESHOLD, similarity: med, name: owner.name };
   }
 
-  window.CatFace = { ensureReady, detectOnce, enrollOwner, recognize, isEnrolled, clearOwner, SIM_THRESHOLD };
+  window.CatFace = { ensureReady, detectOnce, enrollOwner, recognize, isEnrolled, clearOwner, exportOwner, SIM_THRESHOLD };
 })();
