@@ -13,7 +13,8 @@ import csv
 import json
 
 CSV_FILE = 'data.csv'
-OUTPUT   = 'model_data.js'
+# training/ ada di subfolder → tulis model_data.js ke ROOT project (dipakai index.html)
+OUTPUT   = '../model_data.js'
 
 print(f"Loading {CSV_FILE}...")
 rows = []

@@ -20,3 +20,7 @@ docs/
 
 # Backup aset asli sebelum di-resize (lokal aja)
 assets/**/_originals/
+
+# ─── ML training: file berat & aset lama (lokal aja, web nggak butuh) ───
+training/stickers/          # stiker "shark cat" lama, udah diganti assets/stickers/
+training/model_info.json
