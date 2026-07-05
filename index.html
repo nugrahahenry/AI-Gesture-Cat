@@ -5,6 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Catmoji — sapa & main bareng Moji 🐱</title>
   <meta name="description" content="Catmoji — tunjukkan gesture tangan, AI baca emosimu, muncul stiker kucing Moji + suara. Ada mode Intro (perkenalan) & Challenge.">
+  <!-- Preview pas link di-share (WA/IG/Twitter). TODO Henry: pas deploy, bikin og-image 1200×630 khusus &
+       ganti og:image/twitter:image ke URL ABSOLUT (mis. https://catmoji.vercel.app/assets/og-image.png). -->
+  <meta property="og:title" content="Catmoji — main bareng Moji 🐱">
+  <meta property="og:description" content="Gesture tangan → AI baca emosimu → stiker kucing Moji + suara. Coba mode Intro & Challenge!">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="assets/brand/catmoji-primary-logo.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="assets/brand/catmoji-primary-logo.png">
   <link rel="icon" href="favicon.ico" sizes="any">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
@@ -16,12 +24,35 @@
        ╚══════════════════════════════════════════════════════╝ -->
   <script>
     // Stiker per emosi — pakai maskot Moji (assets/stickers)
+    // CATATAN buat Henry: 'surprised' & 'excited' nunjuk ke aset BARU yang lagi kamu bikin.
+    // Simpan file-nya PERSIS dengan nama: assets/stickers/moji-surprised.png & moji-excited.png
+    // Selama file belum ada, otomatis fallback ke STICKER_FALLBACK di bawah (nggak broken).
     const STICKERS = {
       happy:     'assets/stickers/moji-happy.png',
       sad:       'assets/stickers/moji-crying.png',
       angry:     'assets/stickers/moji-angrypng.png',
+      surprised: 'assets/stickers/moji-surprised.png',
+      excited:   'assets/stickers/moji-excited.png'
+    };
+    // Fallback sementara kalau aset baru belum ke-drop (biar gambar nggak broken)
+    const STICKER_FALLBACK = {
       surprised: 'assets/stickers/moji-love.png',
       excited:   'assets/stickers/moji-thumbs-up.png'
+    };
+    // Set src stiker + auto-fallback kalau file utama 404 (buat <img> apa pun)
+    function setSticker(img, emotion) {
+      if (!img) return;
+      img.onerror = function () { this.onerror = null; this.src = STICKER_FALLBACK[emotion] || 'assets/stickers/moji-waving.png'; };
+      img.src = STICKERS[emotion] || 'assets/stickers/moji-waving.png';
+    }
+
+    // ── Profil & sosial media Henry (dipakai footer) ──
+    // Isi PORTO begitu web porto online → nama "Henry Nugraha" auto-link ke situ.
+    const PROFILE = {
+      porto:     '',                              // TODO Henry: URL web porto (kosong = nama link ke GitHub)
+      github:    'https://github.com/nugrahahenry',
+      instagram: 'https://instagram.com/hnrydev',
+      whatsapp:  'https://wa.me/6289513595554',    // 089513595554 → +62 89513595554
     };
 
     // Warna tema per emosi (dari palette Catmoji + biru buat "sad").
@@ -36,6 +67,11 @@
       happy:'#8A6000', sad:'#245C99', angry:'#B23225',
       surprised:'#0B6357', excited:'#C2410C'
     };
+    // Emosi ⇄ JUMLAH JARI (dari collect_data.py: tombol 1=happy, 2=sad, 3=angry, 4=surprised, 5=excited).
+    // Jadi tiap emosi = pose jumlah jari segitu. Dipakai buat legenda + hint challenge.
+    const GESTURE = { happy:1, sad:2, angry:3, surprised:4, excited:5 };
+    const FINGER_EMOJI = ['', '☝️', '✌️', '🤟', '🖖', '🖐️'];
+    function gestureHint(e){ const n = GESTURE[e]; return n ? `${FINGER_EMOJI[n]} ${n} jari` : ''; }
 
     // Slide intro — trigger adalah jumlah jari yang ditampilkan
     // Ganti text & speech sesuai keinginan kamu
@@ -313,7 +349,7 @@
     #prob-section{background:var(--paper);border:var(--bd);border-radius:var(--radius-sm);padding:14px 16px;box-shadow:var(--shadow-sm)}
     #prob-bars{display:flex;flex-direction:column;gap:9px}
     .bar-row{display:flex;align-items:center;gap:10px}
-    .bar-label{width:70px;font-size:.72rem;font-weight:600;color:var(--muted);text-align:right;flex-shrink:0;transition:color .3s;text-transform:capitalize}
+    .bar-label{width:96px;font-size:.72rem;font-weight:600;color:var(--muted);text-align:right;flex-shrink:0;transition:color .3s;text-transform:capitalize}
     .bar-label.active-label{color:var(--ink);font-weight:800}
     .bar-bg{flex:1;height:10px;background:var(--cream-2);border:2px solid var(--ink);border-radius:999px;overflow:hidden}
     .bar-fill{height:100%;width:0%;transition:width .22s cubic-bezier(.4,0,.2,1),background .3s;background:var(--tangerine)}
@@ -336,6 +372,10 @@
     @keyframes starSpin{0%,100%{transform:rotate(-8deg) scale(1)}50%{transform:rotate(8deg) scale(1.1)}}
     .lobby-title{font-family:'Bricolage Grotesque',sans-serif;font-size:1.5rem;font-weight:800}
     .lobby-desc{font-size:.85rem;font-weight:500;color:var(--muted);line-height:1.6;max-width:250px}
+    .lobby-legend{background:var(--cream);border:var(--bd);border-radius:var(--radius-sm);padding:10px 12px;box-shadow:var(--shadow-sm);max-width:300px}
+    .ll-title{font-family:'Bricolage Grotesque',sans-serif;font-size:.78rem;font-weight:800;color:var(--ink);margin-bottom:7px}
+    .ll-items{display:flex;flex-wrap:wrap;gap:5px;justify-content:center}
+    .ll-items span{font-size:.68rem;font-weight:700;color:var(--ink);background:var(--paper);border:2px solid var(--ink);border-radius:999px;padding:2px 8px}
     .lobby-lives-preview{font-size:1.4rem;letter-spacing:4px}
     #challenge-start-btn{width:100%;padding:13px;font-size:1rem}
 
@@ -433,14 +473,19 @@
     @keyframes blink{0%,100%{opacity:.45}50%{opacity:1}}
     #intro-form{display:flex;flex-direction:column;gap:9px;width:100%;margin-top:2px}
     #intro-face{width:100%}
-    #intro-face-status{display:flex;align-items:center;justify-content:center;gap:7px;font-size:.82rem;font-weight:600;color:var(--muted);min-height:18px}
+    #intro-face-status{font-size:.82rem;font-weight:600;color:var(--muted);min-height:18px;text-align:center}
     #intro-face-status.ok{color:var(--teal-ink)}
     #intro-face-status.err{color:var(--coral-ink)}
-    #intro-face-status .fs-ico{display:inline-flex;flex-shrink:0}
-    #intro-face-status .fs-ico:empty{display:none}
-    #intro-face-status .fs-ico svg{width:16px;height:16px}
-    #intro-face-status .fs-ico .spin{animation:spin 1s linear infinite;transform-origin:center}
-    @keyframes spin{to{transform:rotate(360deg)}}
+    #intro-face-status.loading::after{content:'';animation:ellipsis 1.1s steps(1,end) infinite}
+    @keyframes ellipsis{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
+    /* Catatan privasi — bikin user nyaman */
+    #intro-privacy{font-size:.7rem;font-weight:600;color:var(--muted);line-height:1.4;text-align:center;max-width:36ch;margin:0 auto}
+    #intro-privacy b{color:var(--ink)}
+    /* Slot maskot pas nampilin ilustrasi STATE (loading/success/error) → sedikit lebih gede */
+    #intro-sticker.state-art{width:150px;height:150px}
+    /* Reveal halus pas form muncul setelah scan wajah gagal-cocok */
+    .intro-reveal{animation:introReveal .5s cubic-bezier(.22,1,.36,1)}
+    @keyframes introReveal{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
     #intro-start-btn{margin-top:2px;padding:12px 34px;font-size:1rem}
     #intro-progress{display:flex;gap:8px;margin-top:2px}
     .intro-dot{width:11px;height:11px;border-radius:50%;background:var(--paper);border:2.5px solid var(--ink);transition:all .3s}
@@ -463,18 +508,42 @@
       font-size:.72rem;font-weight:700;color:var(--ink);background:var(--yellow);
       padding:5px 13px;border-radius:999px;border:2px solid var(--ink);white-space:nowrap;
     }
-    /* Animasi SCAN wajah — di dalam frame kanan */
+    /* Animasi SCAN wajah — reticle (kurung sudut) + garis scan + label, di frame kanan */
     #scan-fx{display:none}
     #intro-overlay.scanning #scan-fx{
-      display:block;position:absolute;inset:12%;z-index:3;pointer-events:none;
-      border:3px solid var(--teal);border-radius:14px;animation:scanPulse 1.05s ease-in-out infinite;
+      display:block;position:absolute;inset:13%;z-index:3;pointer-events:none;
+      animation:scanPulse 1.4s ease-in-out infinite;
     }
+    /* 2 kurung sudut diagonal (kesan "scanner") */
+    #intro-overlay.scanning #scan-fx::before,#intro-overlay.scanning #scan-fx::after{
+      content:'';position:absolute;width:30px;height:30px;border:4px solid var(--teal);
+    }
+    #intro-overlay.scanning #scan-fx::before{top:0;left:0;border-right:0;border-bottom:0;border-radius:12px 0 0 0}
+    #intro-overlay.scanning #scan-fx::after{bottom:0;right:0;border-left:0;border-top:0;border-radius:0 0 12px 0}
     #intro-overlay.scanning #intro-cam-frame::after{
       content:'';position:absolute;left:0;right:0;height:5px;z-index:4;background:var(--tangerine);
-      box-shadow:0 0 14px 2px var(--tangerine);top:0;animation:scanLine 1.15s cubic-bezier(.4,0,.6,1) infinite;
+      box-shadow:0 0 16px 3px var(--tangerine);top:0;animation:scanLine 1.3s cubic-bezier(.4,0,.6,1) infinite;
     }
-    @keyframes scanLine{0%{top:6%;opacity:0}14%{opacity:1}86%{opacity:1}100%{top:94%;opacity:0}}
-    @keyframes scanPulse{0%,100%{opacity:.5;transform:scale(.97)}50%{opacity:1;transform:scale(1.02)}}
+    @keyframes scanLine{0%{top:8%;opacity:0}14%{opacity:1}86%{opacity:1}100%{top:92%;opacity:0}}
+    @keyframes scanPulse{0%,100%{opacity:.45;transform:scale(.95)}50%{opacity:1;transform:scale(1.04)}}
+    /* Label "MENGENALI WAJAH" — cuma pas scanning */
+    #intro-scan-label{display:none}
+    #intro-overlay.scanning #intro-scan-label{
+      display:block;position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:5;
+      font-family:'Bricolage Grotesque',sans-serif;font-size:.66rem;font-weight:800;letter-spacing:1.5px;
+      color:var(--ink);background:var(--teal);padding:4px 12px;border-radius:999px;border:2px solid var(--ink);
+      animation:blink 1.4s ease-in-out infinite;
+    }
+    /* Feedback JARI pas presentasi — biar user tau tangannya kedeteksi */
+    #intro-hold{
+      position:absolute;left:12px;right:12px;bottom:44px;z-index:6;display:none;flex-direction:column;gap:6px;
+      background:var(--paper);border:2.5px solid var(--ink);border-radius:12px;padding:8px 10px;box-shadow:3px 3px 0 var(--ink);
+    }
+    #intro-hold.show{display:flex}
+    #intro-hold-label{font-size:.74rem;font-weight:800;color:var(--ink);text-align:center;line-height:1.2}
+    #intro-hold-track{height:9px;background:var(--cream-2);border:2px solid var(--ink);border-radius:999px;overflow:hidden}
+    #intro-hold-bar{height:100%;width:0%;background:var(--tangerine);transition:width .06s linear}
+    #intro-hold.ok #intro-hold-bar{background:var(--teal)}
 
     /* Toast "Mau intro?" — muncul pas lambai di mode biasa */
     #intro-prompt{
@@ -533,6 +602,17 @@
     .maker-mark .mm-star{color:var(--tangerine)}
     .maker-mark a{color:var(--ink);text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:2px}
     .maker-mark a:hover{color:var(--tangerine)}
+    /* Sosial media — tombol ikon neubrutalist, senada sama app */
+    .socials{display:flex;gap:10px;margin-top:2px}
+    .social-btn{
+      width:44px;height:44px;border-radius:50%;background:var(--paper);border:var(--bd);
+      box-shadow:var(--shadow-sm);color:var(--ink);display:flex;align-items:center;justify-content:center;
+      transition:transform .1s ease, box-shadow .1s ease, background .15s ease, color .15s ease;
+    }
+    .social-btn svg{width:20px;height:20px;fill:currentColor}
+    .social-btn:hover{transform:translate(-1px,-1px);background:var(--tangerine)}
+    .social-btn:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--ink)}
+    .social-btn:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
     .foot-meta{font-size:.68rem;font-weight:600;color:var(--muted);letter-spacing:.3px}
   </style>
 </head>
@@ -575,8 +655,9 @@
               <button type="button" id="intro-voice-test" class="btn" title="Tes suara" aria-label="Tes suara" style="flex:0 0 auto;padding:0 14px;font-size:1.05rem">🔊</button>
             </div>
           </div>
+          <div id="intro-privacy">🔒 Data yang kamu isi cuma buat intro ini — <b>nggak disimpan atau dikirim ke mana pun.</b></div>
           <div id="intro-face" style="display:none;flex-direction:column;gap:8px">
-            <div id="intro-face-status"><span class="fs-ico" aria-hidden="true"></span><span class="fs-txt">Face-ID owner: belum diatur</span></div>
+            <div id="intro-face-status">Face-ID owner: belum diatur</div>
             <button type="button" id="intro-face-enroll" class="btn">👤 Daftarkan wajahku (owner)</button>
           </div>
           <button id="intro-start-btn" class="btn btn-primary">▶ Mulai Intro</button>
@@ -585,7 +666,7 @@
             <div class="done-msg">Perkenalan selesai 🎉</div>
             <div class="f-row" style="justify-content:center">
               <button id="intro-again" class="btn btn-primary">🔁 Intro Lagi</button>
-              <button id="intro-home" class="btn">🏠 Kembali</button>
+              <button id="intro-home" class="btn">🏠 Keluar</button>
             </div>
           </div>
         </div>
@@ -594,6 +675,8 @@
         <div id="intro-cam-frame">
           <video id="intro-cam-feed" autoplay playsinline muted></video>
           <div id="scan-fx" aria-hidden="true"></div>
+          <div id="intro-scan-label" aria-hidden="true">MENGENALI WAJAH</div>
+          <div id="intro-hold" aria-hidden="true"><span id="intro-hold-label"></span><div id="intro-hold-track"><div id="intro-hold-bar"></div></div></div>
           <div id="intro-cam-cap">✨ Senyum, kamu di kamera</div>
         </div>
       </div>
@@ -684,6 +767,12 @@
           <div class="lobby-star">⭐</div>
           <div class="lobby-title">Challenge Mode</div>
           <div class="lobby-desc">Tunjukkan gesture yang diminta dalam 4 detik. Punya 3 nyawa — jaga mereka!</div>
+          <div class="lobby-legend">
+            <div class="ll-title">✋ Gesture = jumlah jari</div>
+            <div class="ll-items">
+              <span>☝️ 1 · happy</span><span>✌️ 2 · sad</span><span>🤟 3 · angry</span><span>🖖 4 · surprised</span><span>🖐️ 5 · excited</span>
+            </div>
+          </div>
           <div class="lobby-lives-preview">❤️ ❤️ ❤️</div>
           <button id="challenge-start-btn" class="btn btn-primary">▶ Mulai Challenge!</button>
         </div>
@@ -737,10 +826,26 @@
   <footer>
     <div class="maker-mark">
       <span class="mm-star">✦</span> built by
-      <a href="https://github.com/StarGod-b" target="_blank" rel="noopener">Henry Nugraha</a>
+      <!-- href diisi JS dari PROFILE.porto (kalau kosong → GitHub). Ganti PROFILE.porto pas porto ready. -->
+      <a id="mk-name" href="https://github.com/nugrahahenry" target="_blank" rel="noopener">Henry Nugraha</a>
+    </div>
+    <div class="socials">
+      <a class="social-btn" href="https://wa.me/6289513595554" target="_blank" rel="noopener" title="WhatsApp" aria-label="WhatsApp Henry">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.149-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      </a>
+      <a class="social-btn" href="https://instagram.com/hnrydev" target="_blank" rel="noopener" title="Instagram @hnrydev" aria-label="Instagram @hnrydev">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069M12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0m0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324M12 16a4 4 0 110-8 4 4 0 010 8m6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881"/></svg>
+      </a>
+      <a class="social-btn" href="https://github.com/nugrahahenry" target="_blank" rel="noopener" title="GitHub" aria-label="GitHub Henry">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+      </a>
     </div>
     <div class="foot-meta">© 2026 Catmoji · gesture → emosi → stiker</div>
   </footer>
+  <script>
+    // Nama footer → web porto kalau PROFILE.porto udah diisi, kalau kosong tetap GitHub.
+    (function () { var n = document.getElementById('mk-name'); if (n && typeof PROFILE !== 'undefined' && PROFILE.porto) { n.href = PROFILE.porto; } })();
+  </script>
 
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -865,7 +970,7 @@
     const labels = MODEL_LABELS || [...new Set(MODEL_DATA.map(r=>r[0]))].sort();
     document.getElementById('prob-bars').innerHTML = labels.map(l=>`
       <div class="bar-row">
-        <span class="bar-label" data-label="${l}">${l}</span>
+        <span class="bar-label" data-label="${l}">${FINGER_EMOJI[GESTURE[l]]||''} ${l}</span>
         <div class="bar-bg"><div class="bar-fill" id="bar-${l}"></div></div>
         <span class="bar-val" id="val-${l}">0%</span>
       </div>`).join('');
@@ -1037,7 +1142,7 @@
     historyData.unshift(emotion);
     if(historyData.length>10)historyData.pop();
     const empty=histEl.querySelector('.hist-empty');if(empty)empty.remove();
-    histEl.innerHTML=historyData.map(e=>`<div class="hist-dot" title="${e}"><img src="${STICKERS[e]||IDLE_STICKER}" alt="${e}"></div>`).join('');
+    histEl.innerHTML=historyData.map(e=>`<div class="hist-dot" title="${e}"><img src="${STICKERS[e]||IDLE_STICKER}" onerror="this.onerror=null;this.src='${STICKER_FALLBACK[e]||IDLE_STICKER}'" alt="${e}"></div>`).join('');
   }
 
   /* ── Normalization ───────────────────────────────────── */
@@ -1068,55 +1173,80 @@
     return countFingers(lm) >= 4;
   }
 
-  /* ── Gemini TTS (proxy /api/tts) → fallback Web Speech ── */
-  let ttsAudio = null, ttsAbort = null;
-  // Default = Web Speech (INSTAN, gratis, scale tanpa batas). Gemini = "premium"
-  // (dipakai tombol 🔊 preview) — natural tapi ada delay ~2-3 dtk + kuota.
-  let PREMIUM_VOICE = false;
+  /* ── Suara: Gemini TTS (natural) dulu → fallback Web Speech ────────────
+   * Kenapa dulu kedengeran "kurang bagus": narasi intro pakai suara BROWSER,
+   * padahal tombol preview 🔊 pakai Gemini (natural). Sekarang narasi juga
+   * Gemini — dan di-PREFETCH di latar pas presentasi mulai, jadi pas slide
+   * muncul suaranya INSTAN (nggak nunggu 2-3 dtk). Kalau /api/tts nggak ada
+   * (buka file lokal / belum deploy) → otomatis fallback suara browser. */
+  let ttsAudio = null;
+  let PREMIUM_VOICE = true;          // coba Gemini dulu (natural); browser = jaring pengaman
+  let premiumOK = null;              // null=blm tau · false=/api/tts absen (stop nyoba) · true=ada
+  const _ttsCache = new Map();       // `${voice}::${text}` -> Promise<objURL> | objURL
 
-  async function speak(text, voice, opts) {
-    const premium = (opts && opts.premium) || PREMIUM_VOICE;
-    // Stop suara & permintaan sebelumnya → klik 10x nggak numpuk
-    if (ttsAudio) { ttsAudio.pause(); ttsAudio = null; }
-    window.speechSynthesis?.cancel();
-    if (ttsAbort) { ttsAbort.abort(); ttsAbort = null; }
-
-    if (premium) {
+  // Ambil audio Gemini (WAV) → object URL, DI-CACHE (biar prefetch = playback instan).
+  async function ttsFetchURL(text, voice) {
+    const key = `${voice}::${text}`;
+    if (_ttsCache.has(key)) return _ttsCache.get(key);
+    const job = (async () => {
+      const ctrl = new AbortController();
+      const to = setTimeout(() => ctrl.abort(), 9000);
+      let r;
       try {
-        ttsAbort = new AbortController();
-        const t = setTimeout(() => ttsAbort && ttsAbort.abort(), 8000);
-        const r = await fetch('/api/tts', {
+        r = await fetch('/api/tts', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(voice ? { text, voice } : { text }), signal: ttsAbort.signal,
+          body: JSON.stringify({ text, voice }), signal: ctrl.signal,
         });
-        clearTimeout(t);
-        const ct = r.headers.get('content-type') || '';
-        if (!r.ok || !ct.includes('audio')) throw new Error(`TTS ${r.status} (${ct})`);
-        const blob = await r.blob();
-        ttsAudio = new Audio(URL.createObjectURL(blob));
+      } finally { clearTimeout(to); }
+      const ct = r.headers.get('content-type') || '';
+      if (r.status === 404 || r.status === 503) premiumOK = false;   // endpoint absen / belum ada key → berhenti nyoba
+      if (!r.ok || !ct.includes('audio')) throw new Error(`TTS ${r.status}`);
+      premiumOK = true;
+      return URL.createObjectURL(await r.blob());
+    })();
+    _ttsCache.set(key, job);
+    try { const url = await job; _ttsCache.set(key, url); return url; }
+    catch (e) { _ttsCache.delete(key); throw e; }
+  }
+
+  // Prefetch semua slide di latar → pas slide muncul, suara Gemini langsung siap.
+  function prefetchVoices(slides, voice) {
+    if (premiumOK === false || !slides) return;
+    slides.forEach(s => { if (s.speech) ttsFetchURL(s.speech, voice).catch(() => {}); });
+  }
+
+  // Ucapkan. Default: Gemini (natural) → fallback browser. opts.preferBrowser=true → langsung browser.
+  let _speakSeq = 0;
+  async function speak(text, voice, opts = {}) {
+    const seq = ++_speakSeq;               // ANTI-DOUBLE: kalau ada speak baru pas yang ini masih fetch → batalin
+    if (ttsAudio) { try { ttsAudio.pause(); } catch (_) {} ttsAudio = null; }
+    window.speechSynthesis?.cancel();
+    if (!opts.preferBrowser && PREMIUM_VOICE && premiumOK !== false) {
+      try {
+        const url = await ttsFetchURL(text, voice);
+        if (seq !== _speakSeq) return false;   // keburu ada suara lain (mis. slide lanjut) → jangan numpuk
+        ttsAudio = new Audio(url);
         await ttsAudio.play();
-        ttsAbort = null;
         return true;
-      } catch (e) {
-        ttsAbort = null;
-        if (e.name === 'AbortError') return false;      // diganti klik baru → diam
-        console.warn('Premium TTS gagal → suara browser:', e.message);
-      }
+      } catch (e) { if (e.name === 'AbortError') return false; /* selain itu → fallback browser */ }
     }
+    if (seq !== _speakSeq) return false;
     webSpeak(text, voice);
     return true;
   }
 
-  // Web Speech: variasiin pitch/rate per pilihan + coba pilih suara cowok/cewe
+  // Web Speech (fallback): pilih suara Indonesia paling natural (Google) + tuning per karakter.
   function webSpeak(text, voice) {
-    const fb = { Sulafat:{r:0.95,p:1.08}, Achird:{r:1.0,p:0.82}, Charon:{r:0.92,p:0.5},
-                 Aoede:{r:1.05,p:1.0}, Leda:{r:1.12,p:1.24}, Kore:{r:0.9,p:0.92} }[voice] || { r:0.95, p:1.05 };
+    const fb = { Sulafat:{r:0.98,p:1.1}, Achird:{r:1.0,p:0.86}, Charon:{r:0.94,p:0.62},
+                 Aoede:{r:1.02,p:1.0}, Leda:{r:1.08,p:1.22}, Kore:{r:0.96,p:0.96} }[voice] || { r:1.0, p:1.05 };
     const u = new SpeechSynthesisUtterance(text);
     u.lang = 'id-ID'; u.rate = fb.r; u.pitch = fb.p;
     const male = ['Achird', 'Charon'].includes(voice);
     const vs = window.speechSynthesis.getVoices() || [];
-    const pick = vs.find(v => /id[-_]ID/i.test(v.lang) && (male ? /pria|male|ardi|david/i.test(v.name) : /wanita|female|gadis|zira/i.test(v.name)))
-              || vs.find(v => /id[-_]ID/i.test(v.lang))
+    const id = vs.filter(v => /id[-_]ID/i.test(v.lang));
+    const pick = id.find(v => /google/i.test(v.name))    // Google id-ID = paling natural di Chrome
+              || id.find(v => male ? /pria|male|ardi|david/i.test(v.name) : /wanita|female|gadis|zira/i.test(v.name))
+              || id[0]
               || vs.find(v => male ? /david|male|guy/i.test(v.name) : /zira|female/i.test(v.name));
     if (pick) u.voice = pick;
     window.speechSynthesis.speak(u);
@@ -1192,7 +1322,9 @@
     };
   }
   function saveIntroProfile(p) {
-    try { localStorage.setItem(INTRO_PROFILE_KEY, JSON.stringify({ ...p, voice: selectedVoice })); } catch (e) {}
+    // PRIVASI: cuma simpen pilihan SUARA. Nama/kampus/prodi/semester TIDAK pernah disimpan/dikirim —
+    // cuma hidup di memori selama sesi ini, hilang pas reload. (dulu ke-save ke localStorage.)
+    try { localStorage.setItem(INTRO_PROFILE_KEY, JSON.stringify({ voice: selectedVoice })); } catch (e) {}
   }
   // Data default = data Henry (owner). Orang lain tinggal ganti formnya.
   // Data OWNER (dipakai cuma kalau wajah dikenali). Guest = form kosong + placeholder.
@@ -1224,6 +1356,7 @@
     const vsel = document.getElementById('intro-voice'); if (vsel) selectedVoice = vsel.value || selectedVoice;
     saveIntroProfile(profile);
     INTRO_SLIDES = buildIntroSlides(profile);
+    prefetchVoices(INTRO_SLIDES, selectedVoice);   // panasin suara Gemini di latar → playback instan
     introSlideIdx = 0;
     introOverlay.classList.add('presenting');   // mobile: munculin kamera di bawah
     renderIntroSlide(0);
@@ -1245,13 +1378,16 @@
     setTimeout(() => document.getElementById('intro-slide')?.focus(), 60);
   }
 
-  const FINGER_EMOJI = ['','☝️','✌️','🤟','🖖','🖐️'];
+  // FINGER_EMOJI + GESTURE + gestureHint didefinisikan di CONFIG (atas) biar prob-bar init bisa akses.
 
   function renderIntroSlide(idx) {
     if (idx === -1) {
       updateLiveGreeting();
+      introStickerEl.classList.remove('state-art');
       introStickerEl.src      = 'assets/stickers/moji-waving.png';
       introHintEl.textContent = 'Isi datamu, pilih suara, lalu lambaikan tangan / klik Mulai';
+      const _pv = document.getElementById('intro-privacy'); if (_pv) _pv.style.display = '';   // catatan privasi balik muncul
+      document.getElementById('intro-hold')?.classList.remove('show','ok');                    // reset feedback jari
     } else if (idx < INTRO_SLIDES.length) {
       const slide = INTRO_SLIDES[idx];
       // Transisi kartu (halus antar slide)
@@ -1266,6 +1402,7 @@
       introStickerEl.style.animation = 'none';
       void introStickerEl.offsetWidth;
       introStickerEl.style.animation = 'popIn .35s cubic-bezier(.34,1.56,.64,1)';
+      introStickerEl.classList.remove('state-art');
       introStickerEl.src             = slide.sticker || 'assets/stickers/moji-happy.png';
 
       // Hint untuk gesture berikutnya
@@ -1293,27 +1430,49 @@
   let introHoldFingers = null, introHoldFingersStart = 0;
   const INTRO_FINGER_HOLD = 500; // ms tahan jari untuk konfirmasi
 
+  // Feedback jari di kamera (biar user tau tangannya kebaca). mode: null|'wave'|'hold'|'wrong'
+  function setHoldFeedback(mode, need, pct, got) {
+    const box = document.getElementById('intro-hold');
+    if (!box) return;
+    if (!mode) { box.classList.remove('show', 'ok'); return; }
+    const lbl = document.getElementById('intro-hold-label');
+    const bar = document.getElementById('intro-hold-bar');
+    box.classList.add('show');
+    if (mode === 'wave') {
+      if (lbl) lbl.textContent = '👋 Lambaikan tangan';
+      if (bar) bar.style.width = '0%'; box.classList.remove('ok');
+    } else if (mode === 'hold') {
+      if (lbl) lbl.textContent = `${FINGER_EMOJI[need] || '✋'} ${need} jari · tahan…`;
+      if (bar) bar.style.width = pct + '%'; box.classList.add('ok');
+    } else { // wrong
+      if (lbl) lbl.textContent = `Tunjukkan ${FINGER_EMOJI[need] || ''} ${need} jari` + (got > 0 ? ` · kedeteksi ${got}` : '');
+      if (bar) bar.style.width = '0%'; box.classList.remove('ok');
+    }
+  }
+
   function tryAdvanceIntro(lm) {
     if (introSlideIdx < 0 || introSlideIdx >= INTRO_SLIDES.length) return;
     const nextIdx = introSlideIdx + 1;
-    if (nextIdx >= INTRO_SLIDES.length) return;
+    if (nextIdx >= INTRO_SLIDES.length) { setHoldFeedback(null); return; }   // slide terakhir → nggak ada gesture
 
     const nextTrigger = INTRO_SLIDES[nextIdx].trigger;
-    if (typeof nextTrigger !== 'number') return; // wave handled elsewhere
+    if (typeof nextTrigger !== 'number') { setHoldFeedback('wave'); return; } // wave dihandle di tempat lain
 
     const fingers = countFingers(lm);
     if (fingers === nextTrigger) {
-      if (introHoldFingers !== fingers) {
-        introHoldFingers = fingers;
-        introHoldFingersStart = Date.now();
-      } else if (Date.now() - introHoldFingersStart >= INTRO_FINGER_HOLD) {
+      if (introHoldFingers !== fingers) { introHoldFingers = fingers; introHoldFingersStart = Date.now(); }
+      const held = Date.now() - introHoldFingersStart;
+      setHoldFeedback('hold', nextTrigger, Math.min(100, (held / INTRO_FINGER_HOLD) * 100));
+      if (held >= INTRO_FINGER_HOLD) {
         introHoldFingers = null;
+        setHoldFeedback(null);
         introSlideIdx = nextIdx;
         renderIntroSlide(nextIdx);
         burst(COLORS['happy'] || '#FFC93C');
       }
     } else {
       introHoldFingers = null;
+      setHoldFeedback('wrong', nextTrigger, 0, fingers);
     }
   }
 
@@ -1387,20 +1546,26 @@
   // Enroll cuma buat OWNER (mode setup: buka URL dengan ?setup). Publik TIDAK
   // bisa daftar wajah → bukan masalah privasi mereka, dan owner tetap tunggal.
   const OWNER_SETUP = new URLSearchParams(location.search).has('setup');
-  // State pakai ikon SVG (bukan emoji) + warna — sesuai DESIGN.md. state: ''|'info'|'loading'|'ok'|'err'
-  const FACE_ICONS = {
-    ok:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
-    err:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
-    loading:'<svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg>',
-    info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+  // State DIVISUALISASIKAN pakai aset Moji transparan (bukan ikon SVG/emoji) — sesuai DESIGN.md.
+  // Ilustrasi tampil di slot maskot intro (introStickerEl). state: ''|'info'|'loading'|'ok'|'err'
+  const FACE_ART = {
+    loading: 'assets/ui/state/moji-loading.png',
+    ok:      'assets/ui/state/moji-success.png',
+    err:     'assets/ui/state/moji-error.png',
   };
   function setFaceStatus(t, state = '') {
-    const box = document.getElementById('intro-face-status'); if (!box) return;
-    const txt = box.querySelector('.fs-txt'), ico = box.querySelector('.fs-ico');
-    if (txt) txt.textContent = t;
-    if (ico) ico.innerHTML = (state && FACE_ICONS[state]) ? FACE_ICONS[state] : '';
-    box.classList.remove('ok', 'err');
-    if (state === 'ok' || state === 'err') box.classList.add(state);
+    const box = document.getElementById('intro-face-status');
+    if (box) {
+      box.textContent = t;
+      box.classList.remove('ok', 'err', 'loading');
+      if (state === 'ok' || state === 'err') box.classList.add(state);
+      if (state === 'loading') box.classList.add('loading');   // titik "..." beranimasi via CSS
+    }
+    // Ganti maskot jadi ilustrasi state (cuma pas welcome, bukan pas slide jalan)
+    if (introStickerEl && introSlideIdx === -1) {
+      if (FACE_ART[state]) { introStickerEl.classList.add('state-art'); introStickerEl.src = FACE_ART[state]; }
+      else { introStickerEl.classList.remove('state-art'); introStickerEl.src = 'assets/stickers/moji-waving.png'; }
+    }
   }
 
   let welcomeBusy = false, welcomeScanned = false;
@@ -1430,22 +1595,26 @@
     if (face) face.style.display = 'flex';
     if (form) form.style.display = 'none';     // sembunyiin form selama scan
     if (startBtn) startBtn.style.display = 'none';
-    setFaceStatus('Mengenali wajah…', 'loading');
+    setFaceStatus('Mengenali wajah', 'loading');   // titik "..." dianimasiin CSS
     introOverlay.classList.add('scanning');
     try {
       CatFace.ensureReady(video);
       const r = await CatFace.recognize();
       introOverlay.classList.remove('scanning');
-      if (r.isOwner) {                         // OWNER → isi data Henry (form tetap disembunyiin)
-        setFaceStatus(`Halo ${r.name}! Lambai atau klik Mulai`, 'ok');
+      if (r.isOwner) {                         // OWNER dikenali → LANGSUNG intro (auto, skip form)
+        setFaceStatus(`Halo ${r.name}! Menyiapkan intro…`, 'ok');   // ilustrasi = moji-success
         fillForm(DEFAULT_PROFILE);
         if (form) form.style.display = 'none';
-        if (startBtn) startBtn.style.display = '';
+        if (startBtn) startBtn.style.display = 'none';
         burst(COLORS.happy);                   // ✨ bintang pas wajah dikenali (momen senang)
-        speak(`Halo ${r.name}! Wajah dikenali.`, selectedVoice);
-      } else {                                 // bukan owner → form KOSONG, isi sendiri
+        // Sengaja NGGAK speak di sini → biar suara nggak DOUBLE. Slide 0 ("Hai [nama]!") yang ngomong.
+        // Auto-mulai intro setelah momen sukses (kalau masih di welcome & belum ditutup)
+        setTimeout(() => { if (currentMode === 'intro' && introSlideIdx === -1) startIntroPresentation(); }, 1600);
+      } else {                                 // bukan owner → lanjut isi form (transisi halus)
         setFaceStatus(r.reason === 'wajah tak terdeteksi' ? 'Hadap kamera ya' : 'Wajah belum dikenal — isi datamu', 'info');
         clearForm(); showGuest();
+        const _f = document.getElementById('intro-form');
+        if (_f) { _f.classList.remove('intro-reveal'); void _f.offsetWidth; _f.classList.add('intro-reveal'); }   // smooth reveal
         if (r.reason !== 'wajah tak terdeteksi') speak('Halo! Isi datamu dulu ya.', selectedVoice);
       }
     } catch (e) { introOverlay.classList.remove('scanning'); clearForm(); showGuest(); console.warn(e); }
@@ -1468,7 +1637,7 @@
     _origRenderIntro(idx);
     const _done = document.getElementById('intro-done'); if (_done) _done.style.display = 'none';
     if (idx !== -1) {   // slide jalan → sembunyiin semua kontrol welcome
-      ['intro-start-btn','intro-form','intro-face'].forEach(id => { const e = document.getElementById(id); if (e) e.style.display = 'none'; });
+      ['intro-start-btn','intro-form','intro-face','intro-privacy'].forEach(id => { const e = document.getElementById(id); if (e) e.style.display = 'none'; });
     } else {
       runWelcomeFlow();  // welcome: kenali wajah dulu → owner skip form / guest isi form
     }
@@ -1476,23 +1645,20 @@
 
   // Layar "selesai" → pilihan ulangi / kembali (BUKAN auto re-scan)
   function showIntroDone() {
-    ['intro-start-btn','intro-form','intro-face'].forEach(id => { const e = document.getElementById(id); if (e) e.style.display = 'none'; });
+    ['intro-start-btn','intro-form','intro-face','intro-privacy'].forEach(id => { const e = document.getElementById(id); if (e) e.style.display = 'none'; });
     const done = document.getElementById('intro-done'); if (done) done.style.display = 'flex';
     if (introHintEl) introHintEl.textContent = 'Mau ulangi atau kembali?';
     burst('#FFC93C');                          // ✨ bintang pas perkenalan selesai
   }
   document.getElementById('intro-again')?.addEventListener('click', () => {
     const done = document.getElementById('intro-done'); if (done) done.style.display = 'none';
-    introSlideIdx = 0; renderIntroSlide(0);              // ulangi intro yang sama
-  });
-  document.getElementById('intro-home')?.addEventListener('click', e => {
-    const btn = e.currentTarget, txt = btn.textContent;
-    btn.disabled = true; btn.textContent = '⏳ Memuat…';   // loading state
-    const done = document.getElementById('intro-done'); if (done) done.style.display = 'none';
-    welcomeScanned = false;                               // izinin scan ulang buat orang berikutnya
+    welcomeScanned = false;                               // izinin scan lagi
     introOverlay.classList.remove('presenting');
-    introSlideIdx = -1; renderIntroSlide(-1);              // balik ke welcome → scan ulang
-    setTimeout(() => { btn.disabled = false; btn.textContent = txt; }, 1500);
+    window.speechSynthesis?.cancel(); if (ttsAudio) { try { ttsAudio.pause(); } catch(_){} ttsAudio = null; }
+    introSlideIdx = -1; renderIntroSlide(-1);             // MULAI LAGI DARI SCAN MUKA (bukan langsung intro)
+  });
+  document.getElementById('intro-home')?.addEventListener('click', () => {
+    document.querySelector('[data-mode="normal"]').click();   // keluar ke mode normal
   });
 
   /* ── Challenge Mode ──────────────────────────────────── */
@@ -1576,7 +1742,8 @@
     const col=COLORS[next]||'#FF6A3D';
     document.getElementById('target-emotion').textContent=next;
     document.getElementById('target-emotion').style.color=COLORS_TEXT[next]||'var(--ink)';
-    document.getElementById('target-sticker').src=STICKERS[next];
+    document.getElementById('target-label').textContent='Tunjukkan · '+gestureHint(next);   // mis. "Tunjukkan · 🖐️ 5 jari"
+    setSticker(document.getElementById('target-sticker'), next);
     timerFill.style.stroke=col; timerText.textContent='…';
     timerFill.style.strokeDashoffset=CIRCUMFERENCE;
     rounds++; updateScoreUI();
@@ -1612,7 +1779,7 @@
       streak=0; lives--;
       renderLives();
       resultEmoji.textContent='❌';
-      resultTextEl.textContent=`Harusnya: ${challengeTarget}`;
+      resultTextEl.textContent=`Harusnya: ${challengeTarget} · ${gestureHint(challengeTarget)}`;
       resultOverlay.className='show wrong';
       try{const ac=getAudioCtx(),t=ac.currentTime;const o=ac.createOscillator(),g=ac.createGain();o.connect(g);g.connect(ac.destination);o.type='square';o.frequency.value=160;g.gain.setValueAtTime(.18,t);g.gain.exponentialRampToValueAtTime(.001,t+.35);o.start(t);o.stop(t+.4)}catch(_){}
       timerText.textContent='✗'; updateScoreUI();
@@ -1654,6 +1821,14 @@
       }
     }
 
+    // ── Intro presenting: cukup HITUNG JARI (nggak butuh kNN/emosi) → responsif + ADA FEEDBACK ──
+    // Dipindah ke ATAS gate confidence: pose "2 jari" sering confidence-emosinya rendah, dulu ke-skip
+    // → tangan kayak nggak kebaca (diem). Sekarang finger-count + feedback jalan terus.
+    if (currentMode === 'intro' && introSlideIdx >= 0) {
+      tryAdvanceIntro(lm);
+      return;
+    }
+
     // Get prediction
     if (Date.now() - lastT < 80) return;
     lastT = Date.now();
@@ -1669,12 +1844,6 @@
       emotionEl.textContent = '?'; emotionEl.style.color = 'var(--muted)';
       confEl.textContent = `${Math.round(confidence*100)}% — tidak yakin`;
       updateBars(all); return;
-    }
-
-    // ── Intro mode: finger counting (bukan kNN) ──
-    if (currentMode === 'intro' && introSlideIdx >= 0) {
-      tryAdvanceIntro(lm);
-      return;
     }
 
     // ── Challenge mode ──
@@ -1696,7 +1865,7 @@
 
     if (emotion !== currentEmotion) {
       currentEmotion = emotion;
-      stickerEl.src = STICKERS[emotion] || IDLE_STICKER;
+      setSticker(stickerEl, emotion);
       stickerFrame.classList.remove('pop'); void stickerFrame.offsetWidth; stickerFrame.classList.add('pop');
       // Set emotion color ke CSS variable — border kamera + conf bar ikut berubah
       document.documentElement.style.setProperty('--emotion-color', col);
@@ -1772,6 +1941,8 @@
       handleLandmarks(lm);
     } else {
       camWrap.classList.remove('detecting');
+      introHoldFingers = null;
+      document.getElementById('intro-hold')?.classList.remove('show','ok');   // tangan ilang → sembunyiin feedback
       if (!paused) {
         camHint.classList.remove('hidden');
         emotionEl.textContent='—'; emotionEl.style.color='var(--muted)';
