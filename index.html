@@ -480,6 +480,7 @@
     @keyframes ellipsis{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
     /* Catatan privasi — bikin user nyaman */
     #intro-privacy{font-size:.7rem;font-weight:600;color:var(--muted);line-height:1.4;text-align:center;max-width:36ch;margin:0 auto}
+    #intro-voicehint{font-size:.66rem;font-weight:600;color:var(--muted);line-height:1.35;text-align:center;max-width:38ch;margin:2px auto 0}
     #intro-privacy b{color:var(--ink)}
     /* Slot maskot pas nampilin ilustrasi STATE (loading/success/error) → sedikit lebih gede */
     #intro-sticker.state-art{width:150px;height:150px}
@@ -654,6 +655,7 @@
               </select>
               <button type="button" id="intro-voice-test" class="btn" title="Tes suara" aria-label="Tes suara" style="flex:0 0 auto;padding:0 14px;font-size:1.05rem">🔊</button>
             </div>
+            <div id="intro-voicehint">🔊 Suara alami saat online. Kalau nggak, pakai suara bawaan perangkatmu (bisa beda-beda).</div>
           </div>
           <div id="intro-privacy">🔒 Data yang kamu isi cuma buat intro ini — <b>nggak disimpan atau dikirim ke mana pun.</b></div>
           <div id="intro-face" style="display:none;flex-direction:column;gap:8px">
@@ -1199,8 +1201,12 @@
         });
       } finally { clearTimeout(to); }
       const ct = r.headers.get('content-type') || '';
-      if (r.status === 404 || r.status === 503) premiumOK = false;   // endpoint absen / belum ada key → berhenti nyoba
-      if (!r.ok || !ct.includes('audio')) throw new Error(`TTS ${r.status}`);
+      if (!r.ok || !ct.includes('audio')) {
+        // Gemini gagal (kuota 429 / no-audio 502 / endpoint 404-503) → MATIIN premium sesi ini,
+        // biar nggak spam request + nggak nunda tiap slide. Langsung pakai suara browser.
+        premiumOK = false;
+        throw new Error(`TTS ${r.status}`);
+      }
       premiumOK = true;
       return URL.createObjectURL(await r.blob());
     })();
@@ -1209,10 +1215,14 @@
     catch (e) { _ttsCache.delete(key); throw e; }
   }
 
-  // Prefetch semua slide di latar → pas slide muncul, suara Gemini langsung siap.
-  function prefetchVoices(slides, voice) {
+  // Prefetch slide SATU-SATU (bukan barengan) → nggak nge-burst rate-limit + hemat kuota.
+  // Begitu 1 gagal (mis. kuota abis) → premiumOK=false → langsung stop, sisanya pakai browser.
+  async function prefetchVoices(slides, voice) {
     if (premiumOK === false || !slides) return;
-    slides.forEach(s => { if (s.speech) ttsFetchURL(s.speech, voice).catch(() => {}); });
+    for (const s of slides) {
+      if (premiumOK === false) break;
+      if (s.speech) { try { await ttsFetchURL(s.speech, voice); } catch (_) {} }
+    }
   }
 
   // Ucapkan. Default: Gemini (natural) → fallback browser. opts.preferBrowser=true → langsung browser.
@@ -1235,21 +1245,31 @@
     return true;
   }
 
-  // Web Speech (fallback): pilih suara Indonesia paling natural (Google) + tuning per karakter.
+  // Web Speech (fallback): pitch/rate per karakter. Charon = COWO TEGAS = deep (pitch rendah).
   function webSpeak(text, voice) {
-    const fb = { Sulafat:{r:0.98,p:1.1}, Achird:{r:1.0,p:0.86}, Charon:{r:0.94,p:0.62},
-                 Aoede:{r:1.02,p:1.0}, Leda:{r:1.08,p:1.22}, Kore:{r:0.96,p:0.96} }[voice] || { r:1.0, p:1.05 };
+    const fb = { Sulafat:{r:0.98,p:1.12}, Achird:{r:0.97,p:0.72}, Charon:{r:0.88,p:0.45},
+                 Aoede:{r:1.02,p:1.02}, Leda:{r:1.08,p:1.25}, Kore:{r:0.96,p:0.98} }[voice] || { r:1.0, p:1.05 };
     const u = new SpeechSynthesisUtterance(text);
     u.lang = 'id-ID'; u.rate = fb.r; u.pitch = fb.p;
     const male = ['Achird', 'Charon'].includes(voice);
     const vs = window.speechSynthesis.getVoices() || [];
-    const id = vs.filter(v => /id[-_]ID/i.test(v.lang));
-    const pick = id.find(v => /google/i.test(v.name))    // Google id-ID = paling natural di Chrome
-              || id.find(v => male ? /pria|male|ardi|david/i.test(v.name) : /wanita|female|gadis|zira/i.test(v.name))
-              || id[0]
-              || vs.find(v => male ? /david|male|guy/i.test(v.name) : /zira|female/i.test(v.name));
+    const id = vs.filter(v => /id[-_]ID/i.test(v.lang) || /indonesia/i.test(v.name));
+    let pick;
+    if (male) {
+      // JANGAN ambil "Google Bahasa Indonesia" (cewe) buat opsi cowo — itu bug lama.
+      // Cari suara COWO id dulu (Ardi/Andika/pria). Kalau mentok cuma ada suara cewe →
+      // tetep dipakai TAPI pitch udah rendah (0.45-0.72) biar kedengeran lebih deep.
+      pick = id.find(v => /ardi|andika|pria|male|cowok/i.test(v.name))
+          || vs.find(v => /male/i.test(v.name) && /^id/i.test(v.lang))
+          || id.find(v => !/google|female|wanita|gadis|zira|perempuan/i.test(v.name))
+          || id[0];
+    } else {
+      pick = id.find(v => /google|female|wanita|gadis|perempuan/i.test(v.name)) || id[0];
+    }
     if (pick) u.voice = pick;
     window.speechSynthesis.speak(u);
+    // Debug: buka dengan ?ttsdebug buat liat suara apa aja yg ada di sistemmu (di Console).
+    if (/ttsdebug/i.test(location.search)) console.log('[TTS]', voice, '→ pakai:', pick && pick.name, '| pitch', fb.p, '| id voices:', id.map(v => v.name));
   }
 
   /* ── Wave Detection ──────────────────────────────────── */
