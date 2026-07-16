@@ -19,6 +19,16 @@
 // fallback ke Web Speech API (suara browser). Itu by design, bukan bug.
 
 const DEFAULT_VOICE = 'Sulafat'; // warm — cocok buat intro ramah. Lihat daftar di README.
+// Arahan GAYA per-voice → tiap suara punya karakter beda (bukan cuma beda pitch).
+// Gemini TTS nafsirin ini sebagai gaya baca, nggak ikut diucapkan.
+const VOICE_STYLE = {
+  Sulafat: 'dengan hangat, ramah, dan bersahabat',
+  Achird:  'dengan ramah, santai, dan bersahaja',
+  Charon:  'dengan tenang, tegas, dan berwibawa',
+  Aoede:   'dengan santai dan easygoing, seperti ngobrol biasa',
+  Leda:    'dengan ceria, muda, dan penuh semangat',
+  Kore:    'dengan jelas, tegas, dan percaya diri',
+};
 const MODELS = [
   process.env.GEMINI_TTS_MODEL || 'gemini-2.5-flash-preview-tts', // stabil
   'gemini-3.1-flash-tts-preview',                                  // cadangan (terbaru)
@@ -66,8 +76,8 @@ async function geminiTTS(model, key, text, voice) {
     body: JSON.stringify({
       // Framing "Bacakan:" — cegah Gemini TTS kadang BALIK TEKS (error 400
       // "tried to generate text") buat kalimat pendek. Directive ini ditafsir
-      // sebagai gaya, bukan ikut dibacakan.
-      contents: [{ parts: [{ text: `Bacakan dengan ramah dan jelas: ${text}` }] }],
+      // sebagai gaya, bukan ikut dibacakan. Gaya per-voice → karakter beda-beda.
+      contents: [{ parts: [{ text: `Bacakan ${VOICE_STYLE[voice] || 'dengan ramah dan jelas'}: ${text}` }] }],
       generationConfig: {
         responseModalities: ['AUDIO'],
         speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } },

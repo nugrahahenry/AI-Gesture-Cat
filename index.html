@@ -491,9 +491,24 @@
     @keyframes introReveal{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
     #intro-start-btn{margin-top:2px;padding:12px 34px;font-size:1rem}
     #intro-progress{display:flex;gap:8px;margin-top:2px}
-    .intro-dot{width:11px;height:11px;border-radius:50%;background:var(--paper);border:2.5px solid var(--ink);transition:all .3s}
-    .intro-dot.active{background:var(--tangerine);transform:scale(1.15)}
+    .intro-dot{width:11px;height:11px;border-radius:50%;background:var(--paper);border:2.5px solid var(--ink);transition:all .3s;animation:dotIn .3s cubic-bezier(.34,1.56,.64,1)}
+    .intro-dot.active{background:var(--tangerine);animation:dotPulse 1.1s ease-in-out infinite}
     .intro-dot.done{background:var(--teal)}
+    @keyframes dotIn{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:scale(1)}}
+    @keyframes dotPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,106,61,.5)}50%{transform:scale(1.3);box-shadow:0 0 0 5px rgba(255,106,61,0)}}
+    /* Titik bulatan mantul pas MENGENALI WAJAH (loading) */
+    #scan-dots{display:none}
+    #intro-overlay.scanning #scan-dots{display:flex;gap:7px;position:absolute;left:50%;top:34px;transform:translateX(-50%);z-index:6}
+    #intro-overlay.rejected #scan-dots{display:none}
+    #scan-dots i{width:9px;height:9px;border-radius:50%;background:var(--teal);border:2px solid var(--ink);animation:scanBounce .9s ease-in-out infinite}
+    #scan-dots i:nth-child(2){background:var(--tangerine);animation-delay:.15s}
+    #scan-dots i:nth-child(3){background:var(--yellow);animation-delay:.3s}
+    @keyframes scanBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+    /* Validasi form intro — field wajib diisi (desain neubrutalism, bukan alert browser) */
+    .f-input.f-invalid,.f-select.f-invalid{border-color:var(--coral)!important;box-shadow:3px 3px 0 var(--coral);animation:fieldShake .4s ease}
+    @keyframes fieldShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+    #intro-formerr{display:none;font-size:.74rem;font-weight:800;color:var(--coral-ink);background:#FFE7E4;border:2.5px solid var(--coral);border-radius:10px;padding:7px 12px;box-shadow:3px 3px 0 var(--ink);text-align:center;max-width:34ch;margin:0 auto}
+    #intro-formerr.show{display:block;animation:introReveal .35s ease}
     .done-msg{font-family:'Bricolage Grotesque',sans-serif;font-size:1.05rem;font-weight:800}
     #intro-close{
       position:fixed;top:20px;right:20px;z-index:210;font-size:.8rem;padding:8px 18px;
@@ -716,11 +731,12 @@
             </div>
             <div id="intro-voicehint">🔊 Suara alami saat online. Kalau nggak, pakai suara bawaan perangkatmu (bisa beda-beda).</div>
           </div>
-          <div id="intro-privacy">🔒 Data yang kamu isi cuma buat intro ini — <b>nggak disimpan atau dikirim ke mana pun.</b></div>
+          <div id="intro-privacy">🔒 Data yang kamu isi cuma buat intro ini. <b>Nggak disimpan atau dikirim ke mana pun.</b></div>
           <div id="intro-face" style="display:none;flex-direction:column;gap:8px">
             <div id="intro-face-status">Face-ID owner: belum diatur</div>
             <button type="button" id="intro-face-enroll" class="btn">👤 Daftarkan wajahku (owner)</button>
           </div>
+          <div id="intro-formerr" role="alert" aria-live="polite"></div>
           <button id="intro-start-btn" class="btn btn-primary">▶ Mulai Intro</button>
           <div id="intro-progress"></div>
           <div id="intro-done" style="display:none;flex-direction:column;gap:12px;align-items:center">
@@ -740,6 +756,7 @@
             <span class="sf-radar"></span><span class="sf-ring"></span><span class="sf-ring"></span>
           </div>
           <div id="intro-scan-label" aria-hidden="true">MENGENALI WAJAH</div>
+          <div id="scan-dots" aria-hidden="true"><i></i><i></i><i></i></div>
           <div id="enroll-fx" aria-hidden="true">
             <div class="ef-ring"></div>
             <div class="ef-oval"></div>
@@ -1320,8 +1337,9 @@
 
   // Web Speech (fallback): pitch/rate per karakter. Charon = COWO TEGAS = deep (pitch rendah).
   function webSpeak(text, voice) {
-    const fb = { Sulafat:{r:0.98,p:1.12}, Achird:{r:0.97,p:0.72}, Charon:{r:0.88,p:0.45},
-                 Aoede:{r:1.02,p:1.02}, Leda:{r:1.08,p:1.25}, Kore:{r:0.96,p:0.98} }[voice] || { r:1.0, p:1.05 };
+    // Pitch NATURAL (0.8–1.15) — jangan ekstrem (dulu Charon 0.45 = kedengeran aneh/robot).
+    const fb = { Sulafat:{r:1.0,p:1.05}, Achird:{r:0.98,p:0.85}, Charon:{r:0.92,p:0.8},
+                 Aoede:{r:1.0,p:1.0}, Leda:{r:1.06,p:1.15}, Kore:{r:0.98,p:0.95} }[voice] || { r:1.0, p:1.02 };
     const u = new SpeechSynthesisUtterance(text);
     u.lang = 'id-ID'; u.rate = fb.r; u.pitch = fb.p;
     const male = ['Achird', 'Charon'].includes(voice);
@@ -1343,6 +1361,15 @@
     window.speechSynthesis.speak(u);
     // Debug: buka dengan ?ttsdebug buat liat suara apa aja yg ada di sistemmu (di Console).
     if (/ttsdebug/i.test(location.search)) console.log('[TTS]', voice, '→ pakai:', pick && pick.name, '| pitch', fb.p, '| id voices:', id.map(v => v.name));
+  }
+
+  // Update hint suara sesuai status TTS asli — biar keliatan natural TTS (Gemini) aktif/nggak.
+  function updateVoiceHint() {
+    const el = document.getElementById('intro-voicehint');
+    if (!el) return;
+    if (premiumOK === true)       el.textContent = '🔊 Suara natural (Gemini) aktif.';
+    else if (premiumOK === false) el.textContent = '🔊 Pakai suara bawaan perangkatmu (natural TTS belum aktif).';
+    else                          el.textContent = '🔊 Suara alami saat online. Kalau nggak, pakai suara bawaan perangkatmu (bisa beda-beda).';
   }
 
   /* ── Wave Detection ──────────────────────────────────── */
@@ -1442,9 +1469,35 @@
     const f = (document.getElementById('intro-nama')?.value || '').trim().split(' ')[0];
     if (introTextEl) introTextEl.textContent = f ? `Hai, ${f}! 👋` : 'Yuk Kenalan! ✨';
   }
+  // ── Validasi form intro — guest wajib lengkapin data dulu ──
+  const REQUIRED_FIELDS = { 'intro-nama':'nama', 'intro-univ':'kampus', 'intro-prodi':'prodi', 'intro-semester':'semester' };
+  function validateIntroForm() {
+    return Object.keys(REQUIRED_FIELDS).filter(id => !((document.getElementById(id)?.value || '').trim()));
+  }
+  function clearFormError() {
+    document.getElementById('intro-formerr')?.classList.remove('show');
+    Object.keys(REQUIRED_FIELDS).forEach(id => document.getElementById(id)?.classList.remove('f-invalid'));
+  }
+  function showFormError(missing) {
+    Object.keys(REQUIRED_FIELDS).forEach(id => document.getElementById(id)?.classList.remove('f-invalid'));
+    missing.forEach(id => { const el = document.getElementById(id); if (el) { void el.offsetWidth; el.classList.add('f-invalid'); } });
+    const err = document.getElementById('intro-formerr');
+    if (err) { err.textContent = 'Lengkapi dulu: ' + missing.map(id => REQUIRED_FIELDS[id]).join(', ') + ' 📝'; err.classList.add('show'); }
+    document.getElementById(missing[0])?.focus();
+  }
+  // Titik "perjalanan" intro di bawah tombol Mulai — jumlahnya ngikutin isian form (pas idle).
+  function renderProgressPreview() {
+    if (introSlideIdx !== -1 || !introProgEl) return;
+    const n = buildIntroSlides(readIntroForm()).length;
+    introProgEl.innerHTML = Array.from({ length: n }, (_, i) => `<div class="intro-dot ${i === 0 ? 'active' : ''}"></div>`).join('');
+  }
+
   // Dipakai 2 entry point: tombol Mulai & lambaian tangan.
   function startIntroPresentation() {
     if (introSlideIdx !== -1) return;
+    const missing = validateIntroForm();
+    if (missing.length) { showFormError(missing); return; }   // guest belum lengkap → jangan mulai
+    clearFormError();
     const profile = readIntroForm();
     const vsel = document.getElementById('intro-voice'); if (vsel) selectedVoice = vsel.value || selectedVoice;
     saveIntroProfile(profile);
@@ -1513,8 +1566,9 @@
       // TTS
       if (slide.speech) speak(slide.speech, selectedVoice);
     }
-    // Progress dots
-    introProgEl.innerHTML = INTRO_SLIDES.map((_, i) =>
+    // Progress dots — idle = preview "perjalanan" (ngikutin form); jalan = posisi slide
+    if (idx === -1) { renderProgressPreview(); }
+    else introProgEl.innerHTML = INTRO_SLIDES.map((_, i) =>
       `<div class="intro-dot ${i<idx?'done':i===idx?'active':''}"></div>`
     ).join('');
   }
@@ -1577,6 +1631,12 @@
 
   // Sapaan LIVE: update pas guest ngetik nama
   document.getElementById('intro-nama')?.addEventListener('input', updateLiveGreeting);
+  // Ngetik di form → bersihin tanda error field itu + refresh titik "perjalanan"
+  document.getElementById('intro-form')?.addEventListener('input', (e) => {
+    e.target?.classList?.remove('f-invalid');
+    if (!validateIntroForm().length) document.getElementById('intro-formerr')?.classList.remove('show');
+    renderProgressPreview();
+  });
 
   // A11y: Escape nutup intro (perilaku dialog standar)
   document.addEventListener('keydown', (e) => {
@@ -1614,6 +1674,7 @@
     const sayLbl = lbl.replace(/\s*\(.*?\)/g, '').trim();   // buang "(cewe/cowo)" dari yang DIUCAPKAN
     voiceTestBtn.dataset.busy = '1'; voiceTestBtn.disabled = true; voiceTestBtn.textContent = '⏳';
     await speak(`Halo! Ini contoh suara ${sayLbl}.`, v, { premium: true });  // preview = suara Gemini asli
+    updateVoiceHint();                                                       // kabarin natural TTS aktif/nggak
     voiceTestBtn.textContent = '🔊'; voiceTestBtn.disabled = false; voiceTestBtn.dataset.busy = '0';
   });
 
