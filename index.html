@@ -509,6 +509,9 @@
     @keyframes fieldShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
     #intro-formerr{display:none;font-size:.74rem;font-weight:800;color:var(--coral-ink);background:#FFE7E4;border:2.5px solid var(--coral);border-radius:10px;padding:7px 12px;box-shadow:3px 3px 0 var(--ink);text-align:center;max-width:34ch;margin:0 auto}
     #intro-formerr.show{display:block;animation:introReveal .35s ease}
+    .btn-link{background:none;border:none;color:var(--teal-ink);font-weight:800;font-size:.72rem;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:2px;cursor:pointer;padding:3px 4px}
+    .btn-link:hover{color:var(--tangerine)}
+    .btn-link:focus-visible{outline:3px solid var(--teal);outline-offset:2px;border-radius:4px}
     .done-msg{font-family:'Bricolage Grotesque',sans-serif;font-size:1.05rem;font-weight:800}
     #intro-close{
       position:fixed;top:20px;right:20px;z-index:210;font-size:.8rem;padding:8px 18px;
@@ -738,6 +741,7 @@
           </div>
           <div id="intro-formerr" role="alert" aria-live="polite"></div>
           <button id="intro-start-btn" class="btn btn-primary">▶ Mulai Intro</button>
+          <button type="button" id="intro-rescan" class="btn-link" style="display:none">🔄 Itu aku, bukan tamu? Scan ulang wajah</button>
           <div id="intro-progress"></div>
           <div id="intro-done" style="display:none;flex-direction:column;gap:12px;align-items:center">
             <div class="done-msg">Perkenalan selesai 🎉</div>
@@ -1497,8 +1501,9 @@
     if (introSlideIdx !== -1) return;
     const missing = validateIntroForm();
     if (missing.length) { showFormError(missing); return; }   // guest belum lengkap → jangan mulai
-    clearFormError();
+    clearFormError(); hideRescan();
     const profile = readIntroForm();
+    if (!welcomeIsOwner) sessionGuestData = profile;   // inget data tamu (RAM, sesi ini) buat "balik lagi"
     const vsel = document.getElementById('intro-voice'); if (vsel) selectedVoice = vsel.value || selectedVoice;
     saveIntroProfile(profile);
     INTRO_SLIDES = buildIntroSlides(profile);
@@ -1657,10 +1662,27 @@
     tabs[n].focus(); tabs[n].click();
   });
 
+  // Pre-warm model Human pas hover/fokus tab Intro → begitu discan, model udah siap (scan instan; benerin "agak lama").
+  (() => {
+    const introTab = document.querySelector('[data-mode="intro"]');
+    let warmed = false;
+    const warm = () => { if (warmed || typeof CatFace === 'undefined' || !CatFace.isEnrolled()) return; warmed = true; try { CatFace.ensureReady(video); } catch (_) {} };
+    introTab?.addEventListener('mouseenter', warm);
+    introTab?.addEventListener('focus', warm);
+  })();
+
   // Tombol MULAI yang jelas
   document.getElementById('intro-start-btn').addEventListener('click', e => {
     e.stopPropagation();
     startIntroPresentation();
+  });
+
+  // "Scan ulang wajah" — buat owner yang framing-nya meleset (jujur: beneran re-scan, nggak bisa dipakai pura-pura jadi owner)
+  document.getElementById('intro-rescan')?.addEventListener('click', e => {
+    e.stopPropagation();
+    hideRescan();
+    welcomeScanned = false; welcomeBusy = false;   // izinin scan ulang
+    runWelcomeFlow();
   });
 
   // Tombol 🔊 — dengar contoh suara yang dipilih (Gemini di Vercel; browser di localhost)
@@ -1724,6 +1746,17 @@
   }
 
   let welcomeBusy = false, welcomeScanned = false;
+  // Ingatan tamu SESI INI — cuma di RAM (nggak pernah ke localStorage/server). Ilang pas reload/tutup tab.
+  // Tamu yang balik ke intro / "Intro Lagi" → form ke-isi lagi data terakhirnya (nggak ngetik ulang).
+  let sessionGuestData = null;
+  let welcomeIsOwner = false;
+  function prefillGuestForm() {
+    const d = sessionGuestData;
+    if (d && (d.nama || d.univ || d.prodi || d.semester)) fillForm(d);
+    else clearForm();
+  }
+  function showRescan() { const b = document.getElementById('intro-rescan'); if (b) b.style.display = ''; }
+  function hideRescan() { const b = document.getElementById('intro-rescan'); if (b) b.style.display = 'none'; }
   function showGuest() {
     const form = document.getElementById('intro-form');
     const startBtn = document.getElementById('intro-start-btn');
@@ -1742,11 +1775,11 @@
     if (!enrolled) {                          // belum ada owner ke-enroll (publik) → langsung form
       if (face) face.style.display = OWNER_SETUP ? 'flex' : 'none';
       setFaceStatus(OWNER_SETUP ? 'Mode setup — klik "Daftarkan wajahku"' : '', OWNER_SETUP ? 'info' : '');
-      clearForm(); showGuest();
+      prefillGuestForm(); showGuest();
       return;
     }
     if (welcomeBusy || welcomeScanned) return;   // SCAN CUMA SEKALI per buka intro (anti re-scan)
-    welcomeBusy = true;
+    welcomeBusy = true; welcomeIsOwner = false; hideRescan();
     if (face) face.style.display = 'flex';
     if (form) form.style.display = 'none';     // sembunyiin form selama scan
     if (startBtn) startBtn.style.display = 'none';
@@ -1758,6 +1791,7 @@
       const r = await CatFace.recognize();
       introOverlay.classList.remove('scanning');
       if (r.isOwner) {                         // OWNER dikenali → LANGSUNG intro (auto, skip form)
+        welcomeIsOwner = true; hideRescan();
         setFaceStatus(`Halo ${r.name}! Menyiapkan intro…`, 'ok');   // ilustrasi = moji-success
         fillForm(DEFAULT_PROFILE);
         if (form) form.style.display = 'none';
@@ -1767,8 +1801,8 @@
         // Auto-mulai intro setelah momen sukses (kalau masih di welcome & belum ditutup)
         setTimeout(() => { if (currentMode === 'intro' && introSlideIdx === -1) startIntroPresentation(); }, 1600);
       } else if (r.reason) {                   // nggak ada perbandingan (wajah nggak kebaca / human gagal) → langsung form
-        setFaceStatus('Isi datamu dulu ya 👋', 'info');
-        clearForm(); showGuest();
+        setFaceStatus(sessionGuestData ? 'Selamat datang lagi! 👋' : 'Isi datamu dulu ya 👋', 'info');
+        prefillGuestForm(); showGuest(); showRescan();
         const _f = document.getElementById('intro-form');
         if (_f) { _f.classList.remove('intro-reveal'); void _f.offsetWidth; _f.classList.add('intro-reveal'); }
       } else {                                 // ADA wajah tapi BUKAN owner (guest) → beat "belum kenal"
@@ -1778,12 +1812,12 @@
         speak('Halo! Isi datamu dulu ya.', selectedVoice);
         setTimeout(() => {                                                   // beat ~1.4s → form (reveal)
           introOverlay.classList.remove('rejected');
-          clearForm(); showGuest();
+          prefillGuestForm(); showGuest(); showRescan();
           const _f = document.getElementById('intro-form');
           if (_f) { _f.classList.remove('intro-reveal'); void _f.offsetWidth; _f.classList.add('intro-reveal'); }
         }, 1400);
       }
-    } catch (e) { introOverlay.classList.remove('scanning'); clearForm(); showGuest(); console.warn(e); }
+    } catch (e) { introOverlay.classList.remove('scanning'); prefillGuestForm(); showGuest(); console.warn(e); }
     finally { welcomeBusy = false; welcomeScanned = true; }
   }
 
@@ -1851,7 +1885,7 @@
     _origRenderIntro(idx);
     const _done = document.getElementById('intro-done'); if (_done) _done.style.display = 'none';
     if (idx !== -1) {   // slide jalan → sembunyiin semua kontrol welcome
-      ['intro-start-btn','intro-form','intro-face','intro-privacy'].forEach(id => { const e = document.getElementById(id); if (e) e.style.display = 'none'; });
+      ['intro-start-btn','intro-form','intro-face','intro-privacy','intro-rescan','intro-formerr'].forEach(id => { const e = document.getElementById(id); if (e) e.style.display = 'none'; });
     } else {
       runWelcomeFlow();  // welcome: kenali wajah dulu → owner skip form / guest isi form
     }
@@ -1859,7 +1893,7 @@
 
   // Layar "selesai" → pilihan ulangi / kembali (BUKAN auto re-scan)
   function showIntroDone() {
-    ['intro-start-btn','intro-form','intro-face','intro-privacy'].forEach(id => { const e = document.getElementById(id); if (e) e.style.display = 'none'; });
+    ['intro-start-btn','intro-form','intro-face','intro-privacy','intro-rescan','intro-formerr'].forEach(id => { const e = document.getElementById(id); if (e) e.style.display = 'none'; });
     const done = document.getElementById('intro-done'); if (done) done.style.display = 'flex';
     if (introHintEl) introHintEl.textContent = 'Mau ulangi atau kembali?';
     burst('#FFC93C');                          // ✨ bintang pas perkenalan selesai
