@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Catmoji — sapa & main bareng Moji 🐱</title>
-  <meta name="description" content="Catmoji — tunjukkan gesture tangan, AI baca emosimu, muncul stiker kucing Moji + suara. Ada mode Intro (perkenalan) & Challenge.">
+  <title>Catmoji · sapa & main bareng Moji 🐱</title>
+  <meta name="description" content="Catmoji · tunjukkan gesture tangan, AI baca emosimu, muncul stiker kucing Moji + suara. Ada mode Intro (perkenalan) & Challenge.">
   <!-- Preview pas link di-share (WA/IG/Twitter). TODO Henry: pas deploy, bikin og-image 1200×630 khusus &
        ganti og:image/twitter:image ke URL ABSOLUT (mis. https://catmoji.vercel.app/assets/og-image.png). -->
-  <meta property="og:title" content="Catmoji — main bareng Moji 🐱">
+  <meta property="og:title" content="Catmoji · main bareng Moji 🐱">
   <meta property="og:description" content="Gesture tangan → AI baca emosimu → stiker kucing Moji + suara. Coba mode Intro & Challenge!">
   <meta property="og:type" content="website">
   <meta property="og:image" content="assets/brand/og-image.png">
@@ -1755,7 +1755,7 @@
     if (d && (d.nama || d.univ || d.prodi || d.semester)) fillForm(d);
     else clearForm();
   }
-  function showRescan() { const b = document.getElementById('intro-rescan'); if (b) b.style.display = ''; }
+  function showRescan() { if (!OWNER_SETUP) return; const b = document.getElementById('intro-rescan'); if (b) b.style.display = ''; }  // cuma di ?setup — publik nggak lihat
   function hideRescan() { const b = document.getElementById('intro-rescan'); if (b) b.style.display = 'none'; }
   function showGuest() {
     const form = document.getElementById('intro-form');
