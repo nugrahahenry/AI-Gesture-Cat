@@ -10,14 +10,19 @@
   <meta property="og:title" content="Catmoji · main bareng Moji 🐱">
   <meta property="og:description" content="Gesture tangan → AI baca emosimu → stiker kucing Moji + suara. Coba mode Intro & Challenge!">
   <meta property="og:type" content="website">
-  <meta property="og:image" content="assets/brand/og-image.png">
+  <meta property="og:image" content="assets/brand/catmoji-og-image.png">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:image" content="assets/brand/og-image.png">
+  <meta name="twitter:image" content="assets/brand/catmoji-og-image.png">
+  <meta name="application-name" content="Catmoji">
+  <meta name="apple-mobile-web-app-title" content="Catmoji">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="favicon.ico" sizes="any">
-  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
-  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
   <link rel="preload" as="image" href="assets/stickers/moji-waving.png">
-  <meta name="theme-color" content="#FF6A3D">
+  <meta name="theme-color" content="#17B0A0">
 
   <!-- ╔══════════════════════════════════════════════════════╗
        ║  CONFIG — edit bagian ini sesuai kebutuhan kamu    ║
@@ -2211,6 +2216,15 @@
     width:540, height:405, facingMode:'user'
   });
   if (!NO_CAM) camInstance.start();
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch((error) => {
+          console.warn('Catmoji offline cache unavailable:', error);
+        });
+      });
+    }
   </script>
 </body>
 </html>
