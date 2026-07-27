@@ -12,13 +12,13 @@
   'use strict';
 
   const OWNER_KEY     = 'catmoji_owner_face';
-  const SIM_THRESHOLD = 0.6;   // 0..1 — makin tinggi makin ketat. Henry ~0.906, jadi 0.6 lega
-                               // buat dia + lebih susah ditembus orang lain. Naikin ke 0.65-0.7
-                               // kalau ada yang mirip ke-accept.
+  // Owner terukur sekitar 0.906. Ambang 0.60 terlalu longgar dan bisa menerima
+  // wajah lain; 0.80 masih memberi ruang untuk pencahayaan dan pose yang wajar.
+  const SIM_THRESHOLD = 0.80;
   const ENROLL_SAMPLES = 8;
   // Enroll TERPANDU (ala Face-ID): user diarahkan nengok tiap arah → rekam embedding
-  // dari banyak sudut. Recognition nanti ambil similarity TERTINGGI dari semua sudut,
-  // jadi walau wajah miring/dongak/nunduk tetep kenal (bukan cuma pas depan-lurus).
+  // dari banyak sudut. Recognition merata-ratakan dua kecocokan sudut terbaik,
+  // jadi tetap toleran saat miring/dongak/nunduk tanpa bergantung pada satu sampel anomali.
   const ENROLL_POSES = [
     { key: 'center', dir: 'center', main: 'PAS-IN MUKA',   sub: 'Lihat lurus ke kamera' },
     { key: 'right',  dir: 'right',  main: 'TENGOK KANAN',  sub: 'Putar kepala pelan ke kanan' },
@@ -166,7 +166,17 @@
     const w = Array.isArray(box) ? box[2] : (box && box.width) || 0;
     if (!w) return true;
     const vw = (video && video.videoWidth) || 640;
-    return w >= vw * 0.12;
+    return w >= vw * 0.18;
+  }
+
+  // Satu embedding enrolment kadang anomali. Rata-rata dua kecocokan terbaik
+  // menjaga toleransi pose, tanpa membiarkan satu sampel keliru menerima orang lain.
+  function ownerSimilarity(embedding, references) {
+    const top = references
+      .map(reference => simil(embedding, reference))
+      .sort((a, b) => b - a)
+      .slice(0, Math.min(2, references.length));
+    return top.reduce((sum, score) => sum + score, 0) / (top.length || 1);
   }
 
   async function recognize() {
@@ -177,14 +187,13 @@
     // Sample BEBERAPA frame: butuh wajah jelas di banyak frame + similarity konsisten.
     // Ini yang benerin "ketutup tapi masih dikenali" — kalau wajah ketutup, frame
     // valid sedikit → langsung dianggap "tak terdeteksi".
-    const FRAMES = 4, MIN_FACE_FRAMES = 2;     // lebih sedikit = lebih ringan (anti-lag)
+    const FRAMES = 5, MIN_FACE_FRAMES = 3;
     let faceFrames = 0, best = 0; const sims = [];
     for (let i = 0; i < FRAMES; i++) {
       const d = await detectOnce();
       if (d && d.score > 0.6 && faceBigEnough(d.box)) {
         faceFrames++;
-        let s = 0;
-        for (const e of owner.embeddings) { const x = simil(d.embedding, e); if (x > s) s = x; }
+        const s = ownerSimilarity(d.embedding, owner.embeddings);
         sims.push(s); if (s > best) best = s;
       }
       await new Promise(r => setTimeout(r, 150));

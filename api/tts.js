@@ -30,8 +30,9 @@ const VOICE_STYLE = {
   Kore:    'dengan jelas, tegas, dan percaya diri',
 };
 const MODELS = [
-  process.env.GEMINI_TTS_MODEL || 'gemini-2.5-flash-preview-tts', // stabil
-  'gemini-3.1-flash-tts-preview',                                  // cadangan (terbaru)
+  // Satu model yang konsisten lebih penting daripada mengganti karakter suara
+  // di tengah sesi. Bila gagal, frontend beralih ke suara perangkat.
+  process.env.GEMINI_TTS_MODEL || 'gemini-2.5-flash-preview-tts',
 ];
 const MAX_TEXT = 800; // batas aman biar endpoint publik nggak disalahgunakan
 

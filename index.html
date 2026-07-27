@@ -249,6 +249,19 @@
     }
     #cam-overlay.show{display:flex}
     #cam-overlay img{width:120px;height:120px;object-fit:contain}
+    #cam-startup{
+      position:absolute;inset:0;z-index:11;display:flex;flex-direction:column;gap:8px;
+      align-items:center;justify-content:center;background:var(--cream);color:var(--ink);
+      text-align:center;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;
+      transition:opacity .25s ease,visibility .25s ease;
+    }
+    #cam-startup.done{opacity:0;visibility:hidden;pointer-events:none}
+    #cam-startup img{width:112px;height:112px;object-fit:contain;animation:startupBob 1.2s ease-in-out infinite}
+    #cam-startup strong{font-size:.98rem;letter-spacing:.5px;text-transform:uppercase}
+    #cam-startup small{font-family:'Plus Jakarta Sans',sans-serif;font-size:.7rem;font-weight:700;color:var(--muted)}
+    #cam-startup::after{content:'';width:112px;height:8px;background:var(--ink);border-radius:999px;transform:scaleX(.35);animation:startupScan .95s ease-in-out infinite}
+    @keyframes startupBob{50%{transform:translateY(-7px) rotate(-3deg)}}
+    @keyframes startupScan{50%{transform:scaleX(1);background:var(--teal)}}
     #cam-hint{
       position:absolute;bottom:12px;left:50%;transform:translateX(-50%);
       font-size:.76rem;font-weight:700;color:var(--ink);background:var(--yellow);
@@ -593,6 +606,8 @@
     #intro-hold-track{height:9px;background:var(--cream-2);border:2px solid var(--ink);border-radius:999px;overflow:hidden}
     #intro-hold-bar{height:100%;width:0%;background:var(--tangerine);transition:width .06s linear}
     #intro-hold.ok #intro-hold-bar{background:var(--teal)}
+    #intro-hold.reading #intro-hold-bar{background:var(--yellow);animation:introReading 1s ease-in-out infinite}
+    @keyframes introReading{50%{transform:translateX(35%)}}
 
     /* ══ ENROLL terpandu (ala Face-ID) — SENGAJA beda dari scan recognition:
        reticle bulat "pas-in muka" + cincin progress conic keisi + panah arah mantul + kilat jepret ══ */
@@ -745,16 +760,16 @@
               <input id="intro-semester" class="f-input" type="text" inputmode="numeric" placeholder="Semester" maxlength="2" aria-label="Semester"
                 oninput="this.value=this.value.replace(/\D/g,'')" style="flex:1;min-width:0">
               <select id="intro-voice" class="f-select" title="Pilih suara AI" aria-label="Pilih suara AI" style="flex:1.3;min-width:0">
-                <option value="Sulafat">🔊 Hangat (cewe)</option>
-                <option value="Achird">🔊 Ramah (cowo)</option>
-                <option value="Charon">🔊 Tegas (cowo)</option>
-                <option value="Aoede">🔊 Santai (cewe)</option>
-                <option value="Leda">🔊 Muda (cewe)</option>
-                <option value="Kore">🔊 Tegas (cewe)</option>
+                <option value="Sulafat">🔊 Hangat</option>
+                <option value="Achird">🔊 Ramah</option>
+                <option value="Charon" selected>🔊 Tegas (perangkat)</option>
+                <option value="Aoede">🔊 Santai</option>
+                <option value="Leda">🔊 Muda</option>
+                <option value="Kore">🔊 Percaya diri</option>
               </select>
               <button type="button" id="intro-voice-test" class="btn" title="Tes suara" aria-label="Tes suara" style="flex:0 0 auto;padding:0 14px;font-size:1.05rem">🔊</button>
             </div>
-            <div id="intro-voicehint">🔊 Suara alami saat online. Kalau nggak, pakai suara bawaan perangkatmu (bisa beda-beda).</div>
+            <div id="intro-voicehint">🔊 Tegas memakai suara perangkat. Karakternya bisa berbeda di tiap perangkat.</div>
           </div>
           <div id="intro-privacy">🔒 Data yang kamu isi cuma buat intro ini. <b>Nggak disimpan atau dikirim ke mana pun.</b></div>
           <div id="intro-face" style="display:none;flex-direction:column;gap:8px">
@@ -819,6 +834,7 @@
       <video id="webcam" autoplay playsinline aria-hidden="true"></video>
       <canvas id="output" aria-hidden="true"></canvas>
       <div id="cam-overlay"><img src="assets/stickers/moji-sleepy.png" alt="">Dijeda</div>
+      <div id="cam-startup" role="status" aria-live="polite"><img src="assets/ui/state/moji-loading.png" alt=""><strong>Menyiapkan pembaca gesture</strong><small>Kamera dan AI sedang diselaraskan</small></div>
       <div id="wave-badge">👋 Lambaian terdeteksi!</div>
       <div id="intro-prompt">
         <span>👋 Mau bikin intro perkenalan?</span>
@@ -1083,10 +1099,8 @@
   const modelBadge = document.getElementById('model-badge');
   const apiStatus  = document.getElementById('api-status');
   if (typeof MODEL_DATA !== 'undefined') {
-    document.getElementById('badge-text').textContent = `AI LIVE · ${MODEL_DATA.length} data`;
-    modelBadge.classList.add('ready');
-    apiStatus.textContent = `● Model siap · ${MODEL_DATA.length} sampel`;
-    apiStatus.className   = 'ok';
+    document.getElementById('badge-text').textContent = 'MENYIAPKAN DETEKSI';
+    apiStatus.textContent = 'Menyiapkan kamera dan pembaca gesture…';
     // Build prob bars from labels
     const labels = MODEL_LABELS || [...new Set(MODEL_DATA.map(r=>r[0]))].sort();
     document.getElementById('prob-bars').innerHTML = labels.map(l=>`
@@ -1108,6 +1122,7 @@
   const camWrap    = document.getElementById('cam-wrap');
   const camHint    = document.getElementById('cam-hint');
   const camOverlay = document.getElementById('cam-overlay');
+  const camStartup = document.getElementById('cam-startup');
   const stickerEl  = document.getElementById('sticker');
   const stickerFrame = document.getElementById('sticker-frame');
   const stickerCard  = document.getElementById('sticker-card');
@@ -1118,6 +1133,17 @@
   const histEl     = document.getElementById('history-strip');
   const waveBadge  = document.getElementById('wave-badge');
   const IDLE_STICKER = 'assets/stickers/moji-waving.png';
+
+  let handPipelineReady = false;
+  function markHandPipelineReady() {
+    if (handPipelineReady || typeof MODEL_DATA === 'undefined') return;
+    handPipelineReady = true;
+    document.getElementById('badge-text').textContent = `AI LIVE · ${MODEL_DATA.length} data`;
+    modelBadge.classList.add('ready');
+    apiStatus.textContent = `● Model siap · ${MODEL_DATA.length} sampel`;
+    apiStatus.className = 'ok';
+    camStartup?.classList.add('done');
+  }
 
   // Canvas resolution — selalu 540x405 secara internal untuk model,
   // display size dikontrol CSS (width:100%;height:100%)
@@ -1336,12 +1362,23 @@
   // Fingertips: 4(thumb) 8(index) 12(middle) 16(ring) 20(pinky)
   // PIPs:       3(thumb) 6(index) 10(middle) 14(ring) 18(pinky)
 
+  function landmarkDistance(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+
+  function isFingerExtended(lm, tip, pip) {
+    return lm[tip].y < lm[pip].y - 0.015
+      && landmarkDistance(lm[0], lm[tip]) > landmarkDistance(lm[0], lm[pip]) + 0.012;
+  }
+
+  function isThumbExtended(lm) {
+    const tip = lm[4], joint = lm[3], wrist = lm[0], indexBase = lm[5];
+    return landmarkDistance(tip, wrist) > landmarkDistance(joint, wrist) + 0.025
+      && landmarkDistance(tip, indexBase) > landmarkDistance(joint, indexBase) + 0.018;
+  }
+
   function countFingers(lm) {
-    // Jari extended = ujung jari lebih tinggi dari sendi PIP (y lebih kecil)
     const fingers = [[8,6],[12,10],[16,14],[20,18]];
-    let count = fingers.filter(([tip,pip]) => lm[tip].y < lm[pip].y).length;
-    // Ibu jari: extended kalau ujung jauh dari pangkal secara horizontal
-    if (Math.abs(lm[4].x - lm[2].x) > 0.04) count++;
+    let count = fingers.filter(([tip, pip]) => isFingerExtended(lm, tip, pip)).length;
+    if (isThumbExtended(lm)) count++;
     return count;
   }
 
@@ -1393,7 +1430,7 @@
   // Prefetch slide SATU-SATU (bukan barengan) → nggak nge-burst rate-limit + hemat kuota.
   // Begitu 1 gagal (mis. kuota abis) → premiumOK=false → langsung stop, sisanya pakai browser.
   async function prefetchVoices(slides, voice) {
-    if (premiumOK === false || !slides) return;
+    if (voice === 'Charon' || premiumOK === false || !slides) return;
     for (const s of slides) {
       if (premiumOK === false) break;
       if (s.speech) { try { await ttsFetchURL(s.speech, voice); } catch (_) {} }
@@ -1406,7 +1443,8 @@
     const seq = ++_speakSeq;               // ANTI-DOUBLE: kalau ada speak baru pas yang ini masih fetch → batalin
     if (ttsAudio) { try { ttsAudio.pause(); } catch (_) {} ttsAudio = null; }
     window.speechSynthesis?.cancel();
-    if (!opts.preferBrowser && PREMIUM_VOICE && premiumOK !== false) {
+    const useDeviceVoice = opts.preferBrowser || voice === 'Charon';
+    if (!useDeviceVoice && PREMIUM_VOICE && premiumOK !== false) {
       try {
         const url = await ttsFetchURL(text, voice);
         if (seq !== _speakSeq) return false;   // keburu ada suara lain (mis. slide lanjut) → jangan numpuk
@@ -1452,6 +1490,10 @@
   function updateVoiceHint() {
     const el = document.getElementById('intro-voicehint');
     if (!el) return;
+    if (selectedVoice === 'Charon') {
+      el.textContent = '🔊 Tegas memakai suara perangkat. Karakternya bisa berbeda di tiap perangkat.';
+      return;
+    }
     if (premiumOK === true)       el.textContent = '🔊 Suara natural (Gemini) aktif.';
     else if (premiumOK === false) el.textContent = '🔊 Pakai suara bawaan perangkatmu (natural TTS belum aktif).';
     else                          el.textContent = '🔊 Suara alami saat online. Kalau nggak, pakai suara bawaan perangkatmu (bisa beda-beda).';
@@ -1485,11 +1527,11 @@
    * Reusable buat Polara: form → buildIntroSlides() → speak(voice).
    * Logika murni (buildIntroSlides) kepisah dari DOM biar gampang di-copy. */
   const VOICES = [
-    { id: 'Sulafat', label: 'Hangat (cewe)' }, { id: 'Achird', label: 'Ramah (cowo)' },
-    { id: 'Charon', label: 'Tegas (cowo)' }, { id: 'Aoede', label: 'Santai (cewe)' },
-    { id: 'Leda', label: 'Muda (cewe)' }, { id: 'Kore', label: 'Tegas (cewe)' },
+    { id: 'Sulafat', label: 'Hangat' }, { id: 'Achird', label: 'Ramah' },
+    { id: 'Charon', label: 'Tegas (perangkat)' }, { id: 'Aoede', label: 'Santai' },
+    { id: 'Leda', label: 'Muda' }, { id: 'Kore', label: 'Percaya diri' },
   ];
-  let selectedVoice = 'Sulafat';
+  let selectedVoice = 'Charon';
   const INTRO_PROFILE_KEY = 'gesture_intro_profile';
 
   // PURE: profil → array slide (trigger = jumlah jari, maks 5). Tanpa DOM.
@@ -1547,6 +1589,7 @@
     try { p = JSON.parse(localStorage.getItem(INTRO_PROFILE_KEY) || 'null'); } catch (e) {}
     if (p && p.voice) selectedVoice = p.voice;
     const vsel = document.getElementById('intro-voice'); if (vsel) vsel.value = selectedVoice;
+    updateVoiceHint();
   }
   // Sapaan LIVE: "Hai, [nama]!" ngikutin kolom nama pas idle (belum mulai slide)
   function updateLiveGreeting() {
@@ -1588,6 +1631,7 @@
     const vsel = document.getElementById('intro-voice'); if (vsel) selectedVoice = vsel.value || selectedVoice;
     saveIntroProfile(profile);
     INTRO_SLIDES = buildIntroSlides(profile);
+    resetIntroFingerRead();
     prefetchVoices(INTRO_SLIDES, selectedVoice);   // panasin suara Gemini di latar → playback instan
     introSlideIdx = 0;
     introOverlay.classList.add('presenting');   // mobile: munculin kamera di bawah
@@ -1613,13 +1657,14 @@
   // FINGER_EMOJI + GESTURE + gestureHint didefinisikan di CONFIG (atas) biar prob-bar init bisa akses.
 
   function renderIntroSlide(idx) {
+    resetIntroFingerRead();
     if (idx === -1) {
       updateLiveGreeting();
       introStickerEl.classList.remove('state-art');
       introStickerEl.src      = 'assets/stickers/moji-waving.png';
       introHintEl.textContent = 'Isi datamu, pilih suara, lalu lambaikan tangan / klik Mulai';
       const _pv = document.getElementById('intro-privacy'); if (_pv) _pv.style.display = '';   // catatan privasi balik muncul
-      document.getElementById('intro-hold')?.classList.remove('show','ok');                    // reset feedback jari
+      document.getElementById('intro-hold')?.classList.remove('show','ok','reading');          // reset feedback jari
     } else if (idx < INTRO_SLIDES.length) {
       const slide = INTRO_SLIDES[idx];
       // Transisi kartu (halus antar slide)
@@ -1660,26 +1705,52 @@
   }
 
   // advanceIntro sekarang pakai finger counting, bukan kNN
-  let introHoldFingers = null, introHoldFingersStart = 0;
+  let introHoldFingers = null, introHoldFingersStart = 0, introFingerSamples = [];
   const INTRO_FINGER_HOLD = 500; // ms tahan jari untuk konfirmasi
+
+  function resetIntroFingerRead() {
+    introHoldFingers = null;
+    introHoldFingersStart = 0;
+    introFingerSamples = [];
+  }
+
+  // Kamera bisa mengirim satu frame yang blur saat tangan bergerak. Ambil mode dari
+  // lima frame terakhir agar angka 1–4 tidak langsung batal hanya karena satu jitter.
+  function readStableIntroFingerCount(lm) {
+    const raw = countFingers(lm);
+    introFingerSamples.push(raw);
+    if (introFingerSamples.length > 5) introFingerSamples.shift();
+    const counts = {};
+    introFingerSamples.forEach(value => counts[value] = (counts[value] || 0) + 1);
+    const [stable, seen] = Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])[0]
+      .map(Number);
+    return { raw, count: stable, stable: seen >= 3 };
+  }
 
   // Feedback jari di kamera (biar user tau tangannya kebaca). mode: null|'wave'|'hold'|'wrong'
   function setHoldFeedback(mode, need, pct, got) {
     const box = document.getElementById('intro-hold');
     if (!box) return;
-    if (!mode) { box.classList.remove('show', 'ok'); return; }
+    if (!mode) { box.classList.remove('show', 'ok', 'reading'); return; }
     const lbl = document.getElementById('intro-hold-label');
     const bar = document.getElementById('intro-hold-bar');
     box.classList.add('show');
     if (mode === 'wave') {
       if (lbl) lbl.textContent = '👋 Lambaikan tangan';
-      if (bar) bar.style.width = '0%'; box.classList.remove('ok');
+      if (bar) bar.style.width = '0%'; box.classList.remove('ok', 'reading');
+    } else if (mode === 'loading') {
+      if (lbl) lbl.textContent = 'Menyiapkan pembaca gesture…';
+      if (bar) bar.style.width = '30%'; box.classList.remove('ok'); box.classList.add('reading');
+    } else if (mode === 'reading') {
+      if (lbl) lbl.textContent = `Membaca ${FINGER_EMOJI[got] || '✋'} ${got} jari…`;
+      if (bar) bar.style.width = '45%'; box.classList.remove('ok'); box.classList.add('reading');
     } else if (mode === 'hold') {
       if (lbl) lbl.textContent = `${FINGER_EMOJI[need] || '✋'} ${need} jari · tahan…`;
-      if (bar) bar.style.width = pct + '%'; box.classList.add('ok');
+      if (bar) bar.style.width = pct + '%'; box.classList.remove('reading'); box.classList.add('ok');
     } else { // wrong
       if (lbl) lbl.textContent = `Tunjukkan ${FINGER_EMOJI[need] || ''} ${need} jari` + (got > 0 ? ` · kedeteksi ${got}` : '');
-      if (bar) bar.style.width = '0%'; box.classList.remove('ok');
+      if (bar) bar.style.width = '0%'; box.classList.remove('ok', 'reading');
     }
   }
 
@@ -1691,13 +1762,16 @@
     const nextTrigger = INTRO_SLIDES[nextIdx].trigger;
     if (typeof nextTrigger !== 'number') { setHoldFeedback('wave'); return; } // wave dihandle di tempat lain
 
-    const fingers = countFingers(lm);
+    if (!handPipelineReady) { setHoldFeedback('loading'); return; }
+    const reading = readStableIntroFingerCount(lm);
+    if (!reading.stable) { setHoldFeedback('reading', nextTrigger, 0, reading.raw); return; }
+    const fingers = reading.count;
     if (fingers === nextTrigger) {
       if (introHoldFingers !== fingers) { introHoldFingers = fingers; introHoldFingersStart = Date.now(); }
       const held = Date.now() - introHoldFingersStart;
       setHoldFeedback('hold', nextTrigger, Math.min(100, (held / INTRO_FINGER_HOLD) * 100));
       if (held >= INTRO_FINGER_HOLD) {
-        introHoldFingers = null;
+        resetIntroFingerRead();
         setHoldFeedback(null);
         introSlideIdx = nextIdx;
         renderIntroSlide(nextIdx);
@@ -1766,7 +1840,13 @@
     runWelcomeFlow();
   });
 
-  // Tombol 🔊 — dengar contoh suara yang dipilih (Gemini di Vercel; browser di localhost)
+  document.getElementById('intro-voice')?.addEventListener('change', e => {
+    selectedVoice = e.target.value || selectedVoice;
+    updateVoiceHint();
+  });
+
+  // Tombol 🔊 — dengar contoh suara yang dipilih. Charon sengaja selalu memakai
+  // suara perangkat agar label "Tegas" tidak bergantung pada karakter Gemini.
   const voiceTestBtn = document.getElementById('intro-voice-test');
   voiceTestBtn?.addEventListener('click', async e => {
     e.stopPropagation();
@@ -1776,7 +1856,7 @@
     const lbl = (VOICES.find(x => x.id === v) || {}).label || '';
     const sayLbl = lbl.replace(/\s*\(.*?\)/g, '').trim();   // buang "(cewe/cowo)" dari yang DIUCAPKAN
     voiceTestBtn.dataset.busy = '1'; voiceTestBtn.disabled = true; voiceTestBtn.textContent = '⏳';
-    await speak(`Halo! Ini contoh suara ${sayLbl}.`, v, { premium: true });  // preview = suara Gemini asli
+    await speak(`Halo! Ini contoh suara ${sayLbl}.`, v);
     updateVoiceHint();                                                       // kabarin natural TTS aktif/nggak
     voiceTestBtn.textContent = '🔊'; voiceTestBtn.disabled = false; voiceTestBtn.dataset.busy = '0';
   });
@@ -2261,6 +2341,7 @@
   const hands = new Hands({ locateFile: f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}` });
   hands.setOptions({ maxNumHands:1, modelComplexity:1, minDetectionConfidence:0.7, minTrackingConfidence:0.5 });
   hands.onResults(results => {
+    markHandPipelineReady();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (!paused && results.multiHandLandmarks?.length > 0) {
       const lm = results.multiHandLandmarks[0];
@@ -2270,8 +2351,8 @@
       handleLandmarks(lm);
     } else {
       camWrap.classList.remove('detecting');
-      introHoldFingers = null;
-      document.getElementById('intro-hold')?.classList.remove('show','ok');   // tangan ilang → sembunyiin feedback
+      resetIntroFingerRead();
+      document.getElementById('intro-hold')?.classList.remove('show','ok','reading'); // tangan ilang → sembunyiin feedback
       if (!paused) {
         camHint.classList.remove('hidden');
         emotionEl.textContent='—'; emotionEl.style.color='var(--muted)';
@@ -2292,6 +2373,7 @@
     width:540, height:405, facingMode:'user'
   });
   if (!NO_CAM) camInstance.start();
+  else markHandPipelineReady();
   </script>
   <script>
     if ('serviceWorker' in navigator) {
