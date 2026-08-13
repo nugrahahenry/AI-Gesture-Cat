@@ -1,4 +1,4 @@
-const CACHE_NAME = 'catmoji-v1.8.1';
+const CACHE_NAME = 'catmoji-v1.8.4';
 const APP_SHELL = [
   '/',
   '/index.html',
