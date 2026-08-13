@@ -59,9 +59,9 @@
     }
 
     // ── Profil & sosial media Henry (dipakai footer) ──
-    // Isi PORTO begitu web porto online → nama "Henry Nugraha" auto-link ke situ.
+    // Portfolio Henry sudah live; maker dan CTA karya memakai URL canonical ini.
     const PROFILE = {
-      porto:     '',                              // TODO Henry: URL web porto (kosong = nama link ke GitHub)
+      porto:     'https://hnry.dev',
       github:    'https://github.com/nugrahahenry',
       instagram: 'https://instagram.com/hnry.dev',
       whatsapp:  'https://wa.me/6289513595554',    // 089513595554 → +62 89513595554
@@ -840,7 +840,7 @@
               <span>Data intro tidak disimpan</span>
             </div>
             <div class="completion-actions">
-              <a id="intro-work-link" class="btn btn-primary" data-work-link href="https://github.com/nugrahahenry" target="_blank" rel="noopener">Lihat GitHub Henry</a>
+              <a id="intro-work-link" class="btn btn-primary" data-work-link href="https://hnry.dev" target="_blank" rel="noopener">Lihat karya Henry</a>
               <button id="intro-share-btn" class="btn" type="button">Bagikan Catmoji</button>
               <button id="intro-again" class="btn-link" type="button">Ulangi intro</button>
             </div>
@@ -993,7 +993,7 @@
             </div>
             <div class="completion-actions go-actions">
               <button class="go-btn-replay btn btn-primary" id="go-replay-btn" type="button">Main lagi</button>
-              <a id="go-work-link" class="btn" data-work-link href="https://github.com/nugrahahenry" target="_blank" rel="noopener">Lihat GitHub Henry</a>
+              <a id="go-work-link" class="btn" data-work-link href="https://hnry.dev" target="_blank" rel="noopener">Lihat karya Henry</a>
               <button id="go-share-btn" class="btn" type="button">Bagikan</button>
             </div>
           </div>
@@ -1032,8 +1032,8 @@
   <footer>
     <div class="maker-mark">
       <span class="mm-star">✦</span> built by
-      <!-- href diisi JS dari PROFILE.porto (kalau kosong → GitHub). Ganti PROFILE.porto pas porto ready. -->
-      <a id="mk-name" href="https://github.com/nugrahahenry" target="_blank" rel="noopener">Henry Nugraha</a>
+      <!-- href diselaraskan oleh configureWorkLinks() dari konfigurasi PROFILE. -->
+      <a id="mk-name" href="https://hnry.dev" target="_blank" rel="noopener">Henry Nugraha</a>
     </div>
     <div class="socials">
       <a class="social-btn" href="https://wa.me/6289513595554" target="_blank" rel="noopener" title="WhatsApp" aria-label="WhatsApp Henry">
