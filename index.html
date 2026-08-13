@@ -66,6 +66,20 @@
       instagram: 'https://instagram.com/hnry.dev',
       whatsapp:  'https://wa.me/6289513595554',    // 089513595554 → +62 89513595554
     };
+    const WORK_DESTINATION = {
+      href: PROFILE.porto || PROFILE.github,
+      label: PROFILE.porto ? 'Lihat karya Henry' : 'Lihat GitHub Henry'
+    };
+
+    function configureWorkLinks() {
+      document.querySelectorAll('[data-work-link]').forEach((link) => {
+        link.href = WORK_DESTINATION.href;
+        link.textContent = WORK_DESTINATION.label;
+        link.setAttribute('aria-label', WORK_DESTINATION.label);
+      });
+      const makerLink = document.getElementById('mk-name');
+      if (makerLink) makerLink.href = WORK_DESTINATION.href;
+    }
 
     // Warna tema per emosi (dari palette Catmoji + biru buat "sad").
     // COLORS = versi CERAH → buat isi bar, confetti, border/shadow, ring timer.
@@ -206,7 +220,7 @@
       flex:1;padding:12px 20px;border:2.5px solid transparent;border-radius:11px;
       font-family:'Bricolage Grotesque','Plus Jakarta Sans',sans-serif;
       font-size:.9rem;font-weight:700;color:var(--muted);background:transparent;
-      cursor:pointer;white-space:nowrap;transition:transform .1s ease,background .15s ease,color .15s ease;
+      min-height:44px;cursor:pointer;white-space:nowrap;transition:transform .1s ease,background .15s ease,color .15s ease;
     }
     .mode-btn:hover:not(.active){color:var(--ink);background:var(--cream-2)}
     .mode-btn:active{transform:scale(.96)}
@@ -364,6 +378,14 @@
       font-size:.72rem;font-weight:600;color:var(--muted);position:relative;z-index:1;
       min-height:16px;margin-top:2px;text-align:center;
     }
+    .proof-reveal{
+      display:flex;align-items:center;justify-content:center;gap:7px;width:100%;
+      color:var(--ink);font-size:.68rem;font-weight:800;line-height:1.4;text-align:center;
+      opacity:0;transform:translateY(6px);
+      transition:opacity .24s cubic-bezier(.22,1,.36,1),transform .24s cubic-bezier(.22,1,.36,1);
+    }
+    .proof-reveal[hidden]{display:none}
+    .proof-reveal.show{opacity:1;transform:translateY(0)}
 
     /* History */
     #history-section{background:var(--paper);border:var(--bd);border-radius:var(--radius-sm);padding:13px 15px;box-shadow:var(--shadow-sm)}
@@ -375,7 +397,7 @@
     .hist-dot{
       width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;
       background:var(--cream);border:2px solid var(--ink);overflow:hidden;
-      animation:slideIn .22s cubic-bezier(.34,1.56,.64,1);flex-shrink:0;
+      animation:slideIn .22s cubic-bezier(.22,1,.36,1);flex-shrink:0;
     }
     .hist-dot img{width:100%;height:100%;object-fit:contain;padding:2px}
     @keyframes slideIn{from{transform:scale(.4) rotate(-8deg);opacity:0}to{transform:scale(1) rotate(0);opacity:1}}
@@ -421,13 +443,22 @@
 
     #game-over-overlay{
       position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;
-      background:var(--cream);border-radius:var(--radius);z-index:20;padding:20px;
-      animation:goEntrance .35s cubic-bezier(.34,1.56,.64,1);
+      background:var(--cream);border-radius:var(--radius);z-index:20;padding:20px;overflow-y:auto;
+      animation:goEntrance .35s cubic-bezier(.22,1,.36,1);
     }
     #game-over-overlay.show{display:flex}
     @keyframes goEntrance{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
     .go-emoji{font-size:3rem}
     .go-title{font-family:'Bricolage Grotesque',sans-serif;font-size:1.7rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--coral)}
+    .completion-heading{
+      font-family:'Bricolage Grotesque',sans-serif;font-size:1.35rem;font-weight:800;line-height:1.15;text-align:center;
+    }
+    .completion-heading:focus-visible,.go-title:focus-visible{outline:3px solid var(--teal);outline-offset:4px;border-radius:4px}
+    .completion-copy{max-width:40ch;color:var(--muted);font-size:.78rem;font-weight:600;line-height:1.5;text-align:center}
+    .proof-facts{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;width:100%}
+    .proof-facts span{font-size:.66rem;font-weight:800;padding:4px 8px;border-bottom:2px solid var(--ink)}
+    .completion-actions{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:9px;width:100%}
+    .completion-actions .btn,.completion-actions .btn-link{min-height:44px}
     .go-stats{display:flex;gap:0;align-items:stretch;background:var(--paper);border:var(--bd);border-radius:var(--radius-sm);overflow:hidden}
     .go-stat{text-align:center;padding:10px 18px}
     .go-stat+.go-stat{border-left:2.5px solid var(--ink)}
@@ -456,7 +487,7 @@
     #hold-bar{height:100%;width:0%;background:var(--teal);transition:width .05s linear}
     #result-overlay{
       position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;
-      border-radius:var(--radius);animation:resultPop .3s cubic-bezier(.34,1.56,.64,1);z-index:10;
+      border-radius:var(--radius);animation:resultPop .3s cubic-bezier(.22,1,.36,1);z-index:10;
     }
     #result-overlay.show{display:flex}
     #result-overlay.correct{background:#DFF5EE}
@@ -525,19 +556,19 @@
     @keyframes introReveal{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
     #intro-start-btn{margin-top:2px;padding:12px 34px;font-size:1rem}
     #intro-progress{display:flex;gap:8px;margin-top:2px}
-    .intro-dot{width:11px;height:11px;border-radius:50%;background:var(--paper);border:2.5px solid var(--ink);transition:all .3s;animation:dotIn .3s cubic-bezier(.34,1.56,.64,1)}
+    .intro-dot{width:11px;height:11px;border-radius:50%;background:var(--paper);border:2.5px solid var(--ink);transition:all .3s;animation:dotIn .3s cubic-bezier(.22,1,.36,1)}
     .intro-dot.active{background:var(--tangerine);animation:dotPulse 1.1s ease-in-out infinite}
     .intro-dot.done{background:var(--teal)}
     @keyframes dotIn{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:scale(1)}}
     @keyframes dotPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,106,61,.5)}50%{transform:scale(1.3);box-shadow:0 0 0 5px rgba(255,106,61,0)}}
-    /* Titik bulatan mantul pas MENGENALI WAJAH (loading) */
+    /* Titik status saat MENGENALI WAJAH (loading) */
     #scan-dots{display:none}
     #intro-overlay.scanning #scan-dots{display:flex;gap:7px;position:absolute;left:50%;top:34px;transform:translateX(-50%);z-index:6}
     #intro-overlay.rejected #scan-dots{display:none}
-    #scan-dots i{width:9px;height:9px;border-radius:50%;background:var(--teal);border:2px solid var(--ink);animation:scanBounce .9s ease-in-out infinite}
+    #scan-dots i{width:9px;height:9px;border-radius:50%;background:var(--teal);border:2px solid var(--ink);animation:scanPulse .9s ease-in-out infinite}
     #scan-dots i:nth-child(2){background:var(--tangerine);animation-delay:.15s}
     #scan-dots i:nth-child(3){background:var(--yellow);animation-delay:.3s}
-    @keyframes scanBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+    @keyframes scanPulse{0%,100%{transform:scale(.82);opacity:.55}50%{transform:scale(1.08);opacity:1}}
     /* Validasi form intro — field wajib diisi (desain neubrutalism, bukan alert browser) */
     .f-input.f-invalid,.f-select.f-invalid{border-color:var(--coral)!important;box-shadow:3px 3px 0 var(--coral);animation:fieldShake .4s ease}
     @keyframes fieldShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
@@ -548,7 +579,7 @@
     .btn-link:focus-visible{outline:3px solid var(--teal);outline-offset:2px;border-radius:4px}
     .done-msg{font-family:'Bricolage Grotesque',sans-serif;font-size:1.05rem;font-weight:800}
     #intro-close{
-      position:fixed;top:20px;right:20px;z-index:210;font-size:.8rem;padding:8px 18px;
+      position:fixed;top:20px;right:20px;z-index:210;font-size:.8rem;padding:8px 18px;min-height:44px;
     }
     @keyframes cardSwap{from{opacity:.55;transform:scale(.985)}to{opacity:1;transform:scale(1)}}
 
@@ -670,7 +701,16 @@
     @keyframes promptUp{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
     #intro-prompt-no{width:44px;height:44px;padding:0;font-size:.9rem}
 
-    @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+    @media(prefers-reduced-motion:reduce){
+      *,*::before,*::after{scroll-behavior:auto!important;transition:none!important}
+      #sticker-frame,#sticker,.hist-dot,.lobby-star,.life-heart,#game-over-overlay,
+      #result-overlay,#intro-sticker,.intro-reveal,.intro-dot,#scan-dots i,
+      .sf-c,.sf-radar::before,.sf-ring,#intro-scan-label,.ef-oval,.ef-arrow>span,
+      .ef-flash,#intro-hint,#intro-hold-bar{
+        animation:none!important;
+      }
+      .proof-reveal{opacity:1;transform:none}
+    }
 
     /* ─ Responsive — Tablet ─────────────────────────────── */
     @media(max-width:900px){
@@ -689,6 +729,10 @@
 
     /* ─ Responsive — Mobile ─────────────────────────────── */
     @media(max-width:540px){
+      header{margin-bottom:16px}
+      .app-badge{margin-bottom:10px}
+      .brand-logo{width:min(260px,68vw)}
+      #mode-bar{margin-bottom:18px}
       .app-subtitle{font-size:.82rem}
       .mode-btn{font-size:.8rem;padding:8px 12px}
       #sticker-frame{width:170px;height:170px}
@@ -702,6 +746,10 @@
       #panel{gap:10px}
       #footer-info{gap:5px}
       .info-pill{font-size:.62rem;padding:3px 9px}
+      #game-over-overlay{justify-content:flex-start;gap:10px;padding:16px 14px}
+      .completion-actions{flex-direction:column;align-items:stretch}
+      .completion-actions .btn,.completion-actions a{width:100%}
+      .proof-facts{gap:4px 7px}
     }
 
     /* ─ Footer / maker mark ─────────────────────────────── */
@@ -714,7 +762,10 @@
       background:var(--paper);border:var(--bd);border-radius:999px;padding:6px 16px;box-shadow:var(--shadow-sm);
     }
     .maker-mark .mm-star{color:var(--tangerine)}
-    .maker-mark a{color:var(--ink);text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:2px}
+    .maker-mark a{
+      min-height:44px;display:inline-flex;align-items:center;color:var(--ink);
+      text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:2px;
+    }
     .maker-mark a:hover{color:var(--tangerine)}
     /* Sosial media — tombol ikon neubrutalist, senada sama app */
     .socials{display:flex;gap:10px;margin-top:2px}
@@ -781,10 +832,17 @@
           <button type="button" id="intro-rescan" class="btn-link" style="display:none">🔄 Itu aku, bukan tamu? Scan ulang wajah</button>
           <div id="intro-progress"></div>
           <div id="intro-done" style="display:none;flex-direction:column;gap:12px;align-items:center">
-            <div class="done-msg">Perkenalan selesai 🎉</div>
-            <div class="f-row" style="justify-content:center">
-              <button id="intro-again" class="btn btn-primary">🔁 Intro Lagi</button>
-              <button id="intro-home" class="btn">🏠 Keluar</button>
+            <div class="completion-heading" data-completion-title tabindex="-1">Sekarang kamu sudah kenal Henry.</div>
+            <p class="completion-copy">Dan barusan kamu mengendalikan pengalaman ML yang berjalan langsung di browser.</p>
+            <div class="proof-facts" aria-label="Fakta teknis Catmoji">
+              <span>2.460 sampel gesture</span>
+              <span>5 kelas emosi</span>
+              <span>Data intro tidak disimpan</span>
+            </div>
+            <div class="completion-actions">
+              <a id="intro-work-link" class="btn btn-primary" data-work-link href="https://github.com/nugrahahenry" target="_blank" rel="noopener">Lihat GitHub Henry</a>
+              <button id="intro-share-btn" class="btn" type="button">Bagikan Catmoji</button>
+              <button id="intro-again" class="btn-link" type="button">Ulangi intro</button>
             </div>
           </div>
         </div>
@@ -829,7 +887,7 @@
     <button class="mode-btn" data-mode="challenge" role="tab" aria-selected="false" aria-controls="challenge-wrap">Challenge</button>
   </div>
 
-  <div id="main">
+  <main id="main">
     <div id="cam-wrap">
       <video id="webcam" autoplay playsinline aria-hidden="true"></video>
       <canvas id="output" aria-hidden="true"></canvas>
@@ -882,6 +940,10 @@
             <div id="conf-bar-track"><div id="conf-bar-fill"></div></div>
           </div>
           <div id="confidence"></div>
+          <div id="normal-proof" class="proof-reveal" aria-live="polite" hidden>
+            <span aria-hidden="true">✦</span>
+            <span>Diproses langsung di browsermu · 2.460 sampel gesture · 5 emosi</span>
+          </div>
         </div>
         <div id="history-section">
           <div class="section-title">Riwayat emosi</div>
@@ -917,15 +979,22 @@
         <div id="challenge-card" style="display:none">
           <div id="game-over-overlay">
             <div class="go-emoji">😿</div>
-            <div class="go-title">Game Over</div>
+            <div class="go-title" tabindex="-1">Game Over</div>
             <div class="go-stats">
               <div class="go-stat"><div class="go-stat-num" id="go-score-val" style="color:#0B6357">0</div><div class="go-stat-lbl">Benar</div></div>
               <div class="go-stat"><div class="go-stat-num" id="go-rounds-val" style="color:#C2410C">0</div><div class="go-stat-lbl">Ronde</div></div>
               <div class="go-stat"><div class="go-stat-num" id="go-best-val" style="color:#B23225">0</div><div class="go-stat-lbl">Best Streak</div></div>
             </div>
-            <div class="go-actions">
-              <button class="go-btn-replay btn btn-primary" id="go-replay-btn">🔄 Main Lagi</button>
-              <button class="go-btn-quit btn" id="go-quit-btn">Keluar</button>
+            <p class="completion-copy">Gesture kamu diproses oleh model yang berjalan langsung di browser.</p>
+            <div class="proof-facts" aria-label="Fakta teknis Catmoji">
+              <span>2.460 sampel gesture</span>
+              <span>5 kelas emosi</span>
+              <span>Inferensi di browser</span>
+            </div>
+            <div class="completion-actions go-actions">
+              <button class="go-btn-replay btn btn-primary" id="go-replay-btn" type="button">Main lagi</button>
+              <a id="go-work-link" class="btn" data-work-link href="https://github.com/nugrahahenry" target="_blank" rel="noopener">Lihat GitHub Henry</a>
+              <button id="go-share-btn" class="btn" type="button">Bagikan</button>
             </div>
           </div>
           <div id="lives-row"></div>
@@ -957,7 +1026,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </main>
 
   <!-- Footer — maker mark lintas-produk -->
   <footer>
@@ -979,10 +1048,7 @@
     </div>
     <div class="foot-meta">© 2026 Catmoji · gesture → emosi → stiker</div>
   </footer>
-  <script>
-    // Nama footer → web porto kalau PROFILE.porto udah diisi, kalau kosong tetap GitHub.
-    (function () { var n = document.getElementById('mk-name'); if (n && typeof PROFILE !== 'undefined' && PROFILE.porto) { n.href = PROFILE.porto; } })();
-  </script>
+  <script>configureWorkLinks();</script>
 
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -1132,7 +1198,16 @@
   const confBarFill = document.getElementById('conf-bar-fill');
   const histEl     = document.getElementById('history-strip');
   const waveBadge  = document.getElementById('wave-badge');
+  const normalProofEl = document.getElementById('normal-proof');
   const IDLE_STICKER = 'assets/stickers/moji-waving.png';
+
+  let normalProofShown = false;
+  function revealNormalProof() {
+    if (normalProofShown || !normalProofEl) return;
+    normalProofShown = true;
+    normalProofEl.hidden = false;
+    requestAnimationFrame(() => normalProofEl.classList.add('show'));
+  }
 
   let handPipelineReady = false;
   function markHandPipelineReady() {
@@ -1211,7 +1286,9 @@
     showShareToast('Belum bisa menyalin undangan. Coba lagi ya.');
   }
 
-  document.getElementById('share-btn')?.addEventListener('click', shareCatmoji);
+  ['share-btn','intro-share-btn','go-share-btn'].forEach((id) => {
+    document.getElementById(id)?.addEventListener('click', shareCatmoji);
+  });
 
   /* ── Mode switching ──────────────────────────────────── */
   function exitChallenge() {
@@ -1678,7 +1755,7 @@
       // Animate sticker
       introStickerEl.style.animation = 'none';
       void introStickerEl.offsetWidth;
-      introStickerEl.style.animation = 'popIn .35s cubic-bezier(.34,1.56,.64,1)';
+      introStickerEl.style.animation = 'popIn .35s cubic-bezier(.22,1,.36,1)';
       introStickerEl.classList.remove('state-art');
       introStickerEl.src             = slide.sticker || 'assets/stickers/moji-happy.png';
 
@@ -2058,6 +2135,7 @@
     const done = document.getElementById('intro-done'); if (done) done.style.display = 'flex';
     if (introHintEl) introHintEl.textContent = 'Mau ulangi atau kembali?';
     burst('#FFC93C');                          // ✨ bintang pas perkenalan selesai
+    done?.querySelector('[data-completion-title]')?.focus({ preventScroll: true });
   }
   document.getElementById('intro-again')?.addEventListener('click', () => {
     const done = document.getElementById('intro-done'); if (done) done.style.display = 'none';
@@ -2066,10 +2144,6 @@
     window.speechSynthesis?.cancel(); if (ttsAudio) { try { ttsAudio.pause(); } catch(_){} ttsAudio = null; }
     introSlideIdx = -1; renderIntroSlide(-1);             // MULAI LAGI DARI SCAN MUKA (bukan langsung intro)
   });
-  document.getElementById('intro-home')?.addEventListener('click', () => {
-    document.querySelector('[data-mode="normal"]').click();   // keluar ke mode normal
-  });
-
   /* ── Challenge Mode ──────────────────────────────────── */
   const EMOTIONS_LIST=['happy','sad','angry','surprised','excited'];
   const ROUND_DURATION=4.0, PRE_ROUND_MS=1300, HOLD_NEEDED=650;
@@ -2123,17 +2197,14 @@
     document.getElementById('go-rounds-val').textContent=rounds;
     document.getElementById('go-best-val').textContent=bestStreak;
     gameOverEl.classList.add('show');
+    gameOverEl.querySelector('.go-title')?.focus({ preventScroll: true });
   }
 
   document.getElementById('challenge-start-btn').addEventListener('click', startChallenge);
 
   document.getElementById('go-replay-btn').addEventListener('click', () => {
     gameOverEl.classList.remove('show');
-    showChallengeLobby();
-  });
-
-  document.getElementById('go-quit-btn').addEventListener('click', () => {
-    document.querySelector('[data-mode="normal"]').click();
+    startChallenge();
   });
 
   document.getElementById('stop-btn').addEventListener('click',()=>{
@@ -2289,6 +2360,7 @@
     const pct = Math.round(confidence * 100);
     confBarFill.style.width = `${pct}%`;
     confEl.textContent = pct >= 80 ? `${pct}% · yakin` : pct >= 50 ? `${pct}% · hmm...` : `${pct}% · kurang yakin`;
+    revealNormalProof();
   }
 
   function updateBars(all) {

@@ -38,6 +38,7 @@ Built as a portfolio project by Henry Nugraha, Catmoji combines machine learning
 - Guided face enrollment with multi-angle capture for more reliable owner recognition.
 - Gemini TTS narration with a graceful Web Speech API fallback.
 - Challenge mode with lives, gesture targets, and immediate corrective feedback.
+- Proof & Payoff completion states that connect the live interaction to the real model, privacy, and portfolio evidence behind it.
 - Installable PWA shell with maskable icons, offline app-shell caching, and polished share previews.
 - Keyboard support, visible focus states, reduced-motion support, and WCAG-aware contrast choices.
 

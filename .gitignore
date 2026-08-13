@@ -17,6 +17,9 @@ hand_landmarker.task
 
 # ─── Docs = konteks pribadi (DESIGN/CHANGELOG/brief) — jangan ke GitHub ───
 docs/
+PRODUCT.md
+.impeccable/
+.impeccable-critique-body.tmp
 
 # Backup aset asli sebelum di-resize (lokal aja)
 assets/**/_originals/

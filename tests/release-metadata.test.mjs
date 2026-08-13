@@ -9,10 +9,10 @@ const serviceWorker = await fs.readFile(
 );
 
 
-test('PWA cache identity follows the v1.8.4 patch release', () => {
+test('PWA cache identity follows the v1.9.0 Proof & Payoff release', () => {
   assert.match(
     serviceWorker,
-    /const CACHE_NAME = 'catmoji-v1\.8\.4';/,
+    /const CACHE_NAME = 'catmoji-v1\.9\.0';/,
   );
   assert.match(serviceWorker, /'\/index\.html'/);
   assert.match(
