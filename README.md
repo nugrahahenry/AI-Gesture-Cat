@@ -10,7 +10,9 @@
 
 Catmoji turns a webcam into a playful, accessible interaction surface. A user shows a hand gesture, the browser interprets its landmark pattern with a local kNN classifier, and Moji responds with a matching emotion, visual state, and sound.
 
-Built as a portfolio project by Henry Nugraha, Catmoji combines machine learning, frontend interaction design, accessible UI engineering, and product-level polish in a browser-first experience.
+Built as a portfolio project by [Henry Nugraha](https://henry-nugraha.pages.dev/), Catmoji combines machine learning, frontend interaction design, accessible UI engineering, and product-level polish in a browser-first experience.
+
+Current maintenance release: **Catmoji v1.9.2**, connecting the maker and work links to the live StarGod portfolio.
 
 ## The Experience
 
